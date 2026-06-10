@@ -1,7 +1,3 @@
-[submodule "ext/libav"]
-	path = ext/libav
-	url = https://github.com/czz/libav.git
-	branch = movian-master
 [submodule "ext/rtmpdump"]
 	path = ext/rtmpdump
 	url = https://github.com/czz/rtmpdump.git
@@ -18,6 +14,11 @@
 [submodule "ext/vmir"]
 	path = ext/vmir
 	url = https://github.com/andoma/vmir
+	branch = v2.0-new
 [submodule "ext/libyuv"]
 	path = ext/libyuv
 	url = https://chromium.googlesource.com/libyuv/libyuv
+[submodule "ext/ffmpeg"]
+	path = ext/ffmpeg
+	url = https://github.com/FFmpeg/FFmpeg.git
+	branch = release/7.1
