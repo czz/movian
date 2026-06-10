@@ -59,8 +59,8 @@ CONFIG_LIST="
  inotify
  kvstore
  libasound
- libav
- libav_attachment_pointer
+ ffmpeg
+ ffmpeg_attachment_pointer
  libcec
  libfontconfig
  libfreetype
@@ -86,7 +86,7 @@ CONFIG_LIST="
  openssl
  playqueue
  plugins
- polarssl
+ mbedtls
  rar
  realpath
  release
@@ -389,24 +389,25 @@ update_ext_submodule() {
     git submodule status ext/$1
 }
 
-libav_setup() {
-    update_ext_submodule libav
-    echo "Configuring libav..."
+ffmpeg_setup() {
+    update_ext_submodule ffmpeg
+    echo "Configuring FFmpeg..."
 
-    LIBAV_BUILD_DIR=${BUILDDIR}/libav/build
+    FFMPEG_BUILD_DIR=${BUILDDIR}/ffmpeg/build
 
-    mkdir -p "${LIBAV_BUILD_DIR}"
+    mkdir -p "${FFMPEG_BUILD_DIR}"
 
-    #LIBAV_COMMON_FLAGS="--disable-parsers --disable-decoders --disable-demuxers"
+    #FFMPEG_COMMON_FLAGS="--disable-parsers --disable-decoders --disable-demuxers"
 
-    LIBAV_COMMON_FLAGS="${LIBAV_COMMON_FLAGS} --disable-encoders --disable-filters --disable-muxers --disable-devices --disable-demuxer=rtp --disable-protocol=rtp --disable-bzlib --disable-decoder=twinvq --disable-decoder=snow --disable-decoder=cavs --disable-programs --disable-avfilter --enable-decoder=png --enable-decoder=mjpeg --enable-encoder=mjpeg --enable-encoder=png --enable-muxer=spdif --enable-encoder=ac3 --enable-encoder=eac3 --enable-muxer=matroska --enable-encoder=ffvhuff --enable-encoder=pcm_s16le"
+    FFMPEG_COMMON_FLAGS="${FFMPEG_COMMON_FLAGS} --disable-encoders --disable-filters --disable-muxers --disable-devices --disable-demuxer=rtp --disable-protocol=rtp --disable-bzlib --disable-programs --disable-avfilter --disable-x86asm --enable-swresample --enable-encoder=mjpeg --enable-encoder=png --enable-muxer=spdif --enable-encoder=ac3 --enable-encoder=eac3 --enable-muxer=matroska --enable-encoder=ffvhuff --enable-encoder=pcm_s16le"
 
-    (cd ${LIBAV_BUILD_DIR} && ${TOPDIR}/ext/libav/configure ${LIBAV_ARCH_FLAGS} ${LIBAV_COMMON_FLAGS} --prefix=${EXT_INSTALL_DIR} --extra-cflags="${LIBAV_CFLAGS} ${EXTRA_CFLAGS}" --extra-ldflags="${LIBAV_LDFLAGS} ${EXTRA_LDFLAGS}" --cc="${CC}") || die
+    (cd ${FFMPEG_BUILD_DIR} && ${TOPDIR}/ext/ffmpeg/configure ${FFMPEG_ARCH_FLAGS} ${FFMPEG_COMMON_FLAGS} --prefix=${EXT_INSTALL_DIR} --extra-cflags="${FFMPEG_CFLAGS} ${EXTRA_CFLAGS}" --extra-ldflags="${FFMPEG_LDFLAGS} ${EXTRA_LDFLAGS}" --cc="${CC}") || die
 
-    echo >>${CONFIG_MAK} "LIBAV_BUILD_DIR=${LIBAV_BUILD_DIR}"
-    echo >>${CONFIG_MAK} "LIBAV_INSTALL_DIR=${LIBAV_INSTALL_DIR}"
+    FFMPEG_INSTALL_DIR=${EXT_INSTALL_DIR}
+    echo >>${CONFIG_MAK} "FFMPEG_BUILD_DIR=${FFMPEG_BUILD_DIR}"
+    echo >>${CONFIG_MAK} "FFMPEG_INSTALL_DIR=${FFMPEG_INSTALL_DIR}"
 
-    add_stamp libav
+    add_stamp ffmpeg
 }
 
 
@@ -448,7 +449,7 @@ vmir_setup() {
 
 
 ext_setup() {
-    libav_setup
+    ffmpeg_setup
     rtmpdump_setup
     gumbo_setup
     vmir_setup
@@ -470,8 +471,8 @@ libyuv_setup() {
 #
 zlib_setup()
 {
-    ZLIB_VER="1.2.3"
-    download_file http://commondatastorage.googleapis.com/nativeclient-mirror/nacl/zlib-${ZLIB_VER}.tar.gz zlibtarball
+    ZLIB_VER="1.2.13"
+    download_file https://zlib.net/zlib-${ZLIB_VER}.tar.gz zlibtarball
 
     ZLIB_SRC_DIR=${BUILDDIR}/zlib-${ZLIB_VER}
 
@@ -498,8 +499,8 @@ bzip2_setup()
     tar -x -C "${BUILDDIR}" -f "${bzip2tarball}"
 
     sed -ibak "s#^CC=gcc\$#CC=${CC}#" ${BZIP2_SRC_DIR}/Makefile
-    sed -ibak "s#^AR=ar\$#AR=${TOOLCHAIN}ar#" ${BZIP2_SRC_DIR}/Makefile
-    sed -ibak "s#^RANLIB=ranlib\$#RANLIB=${TOOLCHAIN}ranlib#" ${BZIP2_SRC_DIR}/Makefile
+    sed -ibak "s#^AR=ar\$#AR=${AR}#" ${BZIP2_SRC_DIR}/Makefile
+    sed -ibak "s#^RANLIB=ranlib\$#RANLIB=${RANLIB}#" ${BZIP2_SRC_DIR}/Makefile
 
     echo >>${CONFIG_MAK} "BZIP2_BUILD_DIR=${BZIP2_SRC_DIR}"
 
@@ -514,9 +515,9 @@ bzip2_setup()
 #
 freetype_setup()
 {
-    FREETYPE_VER="2.4.9"
+    FREETYPE_VER="2.13.2"
 
-    download_file http://download.savannah.gnu.org/releases/freetype/freetype-old/freetype-${FREETYPE_VER}.tar.gz freetypetarball
+    download_file https://download.savannah.gnu.org/releases/freetype/freetype-${FREETYPE_VER}.tar.gz freetypetarball
 
     FREETYPE_SRC_DIR=${BUILDDIR}/freetype-${FREETYPE_VER}
     FREETYPE_BUILD_DIR=${BUILDDIR}/freetype/build
@@ -525,7 +526,7 @@ freetype_setup()
     mkdir -p "${FREETYPE_BUILD_DIR}"
 
     (cd ${FREETYPE_BUILD_DIR} && \
-        CFLAGS="${ARCH_CFLAGS}" CC="${CC}" AR=${TOOLCHAIN}ar RANLIB=${TOOLCHAIN}ranlib \
+        CFLAGS="${ARCH_CFLAGS}" CC="${CC}" AR="${AR}" RANLIB="${RANLIB}" NM="${NM}" STRIP="${STRIP}" \
         ${FREETYPE_SRC_DIR}/configure \
         $1 \
 	--prefix=${EXT_INSTALL_DIR} \
@@ -550,16 +551,20 @@ CXX=$CXX
 LINKER:=$LINKER
 CFLAGS_cfg  += -I${EXT_INSTALL_DIR}/include
 LDFLAGS_cfg += -L${EXT_INSTALL_DIR}/lib
-STRIP=${TOOLCHAIN}strip
+STRIP=${STRIP:-${TOOLCHAIN}strip}
 OBJDUMP=${TOOLCHAIN}objdump
 OBJCOPY=${TOOLCHAIN}objcopy
-RANLIB=${TOOLCHAIN}ranlib
-AR=${TOOLCHAIN}ar
+RANLIB=${RANLIB:-${TOOLCHAIN}ranlib}
+AR=${AR:-${TOOLCHAIN}ar}
 EXT_INSTALL_DIR=${EXT_INSTALL_DIR}
 EOF
 
-    if enabled libav; then
-	echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lavresample -lswscale -lavformat -lavcodec -lavutil"
+    if enabled ffmpeg; then
+	if [ "${PLATFORM}" = "android" ]; then
+	    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lswresample -lswscale -lavformat -lavcodec -lavutil"
+	else
+	    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lswresample -lswscale -lavformat -lavcodec -lavutil -llzma -ldrm"
+	fi
     fi
 
     if enabled libcec; then
@@ -570,9 +575,9 @@ EOF
 	echo >>${CONFIG_MAK} "LDFLAGS_cfg += -ljpeg"
     fi
 
-    if enabled polarssl; then
-	echo "Using built-in polarssl"
-	echo >>${CONFIG_MAK} "CFLAGS_cfg += -DUSE_POLARSSL"
+    if enabled mbedtls; then
+	echo "Using bundled mbed TLS"
+	echo >>${CONFIG_MAK} "CFLAGS_cfg += -DUSE_MBEDTLS"
     fi
 
 
@@ -657,7 +662,7 @@ enable hls
 enable htsp
 enable icecast
 enable kvstore
-enable libav
+enable ffmpeg
 enable media_settings
 enable metadata
 enable nativesmb
