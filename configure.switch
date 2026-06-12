@@ -1,0 +1,280 @@
+#!/bin/bash
+#
+# HTS configure script for Nintendo Switch
+#
+# Copyright (c) 2005-2009 Andreas Öman
+#
+# Based on FFmpeg's configure script:
+#
+# Copyright (c) 2000-2002 Fabrice Bellard
+# Copyright (c) 2005-2008 Diego Biurrun
+# Copyright (c) 2005-2008 Mans Rullgard
+#
+
+PLATFORM="switch"
+DEFAULT_UI="glw"
+GLWFRONTEND="switch"
+CONFIGURE_POSTFIX="switch"
+
+source support/configure.inc
+
+SRCROOT=`pwd`
+CPU=generic
+ARCH=aarch64
+prefix=/opt/switch
+bindir="\${prefix}/bin"
+mandir="\${prefix}/share/man"
+datadir="\${prefix}/share/showtime"
+libdir="\${prefix}/lib/showtime"
+
+# devkitA64 toolchain
+export DEVKITPRO=/opt/devkitpro
+export DEVKITA64=/opt/devkitpro/devkitA64
+CC=${DEVKITA64}/bin/aarch64-none-elf-gcc
+CXX=${DEVKITA64}/bin/aarch64-none-elf-g++
+STRIP=${DEVKITA64}/bin/aarch64-none-elf-strip
+
+show_help(){
+  common_help
+
+  echo "  --prefix=PREFIX          Install in PREFIX [$prefix]"
+  echo "  --bindir=DIR             Install binaries in DIR [$bindir]"
+  echo "  --mandir=DIR             Install man pages in DIR [$mandir]"
+  echo "  --datadir=DIR            Install data files in DIR [$datadir]"
+  echo "  --libdir=DIR             Install libraries in DIR [$libdir]"
+  echo "  --arch=ARCH              Build for this architecture [$ARCH]"
+  echo "  --cpu=CPU                Build and optimize for specific CPU"
+  echo "  --cc=CC                  Build using compiler CC [$CC]"
+  echo "  --glw-frontend=FRONTEND  Build GLW for FRONTEND [$GLWFRONTEND]"
+  echo "                            switch    Nintendo Switch (libnx)"
+  echo "                            none     Disable GLW"
+  exit 1
+}
+
+
+check_header() {
+    cat >$TMPDIR/1.c <<EOF
+#include <$1>
+int main() {
+ return 0;
+}
+EOF
+    $CC 2>/dev/null $TMPDIR/1.c -o $TMPDIR/1.bin
+}
+
+check_header_cpp() {
+    cat >$TMPDIR/1.cpp <<EOF
+#include <$1>
+int main() {
+ return 0;
+}
+EOF
+    $CXX $TMPDIR/1.cpp -o $TMPDIR/1.bin
+}
+
+check_lib() {
+    cat >$TMPDIR/1.c <<EOF
+int main() {
+ return 0;
+}
+EOF
+    $CC 2>/dev/null $TMPDIR/1.c -o $TMPDIR/1.bin -l$1
+}
+
+fatal() {
+    echo "$1: $2"
+    echo "configure with --disable-$1 to skip this module"
+    die
+}
+
+
+# Switch-specific features
+disable libpthread
+enable zlib
+disable dvd
+enable libfreetype
+disable libfontconfig
+disable libpulse
+disable lirc
+disable stdin
+disable gu
+disable avahi
+disable libxss
+disable libxv
+disable openssl
+enable mbedtls
+enable locatedb
+disable vdpau
+disable libxxf86vm
+enable httpserver
+enable timegm
+disable inotify
+enable realpath
+disable webkit
+disable librtmp
+enable metadata
+enable subtitles
+enable upnp
+enable bittorrent
+
+[ -f project.config ] && source project.config
+
+for opt do
+  optval="${opt#*=}"
+  case "$opt" in
+  --cpu=*) CPU="$optval"
+  ;;
+  --help) show_help
+  ;;
+  --cc=*) CC="$optval"
+  ;;
+  --cxx=*) CXX="$optval"
+  ;;
+  --arch=*) ARCH="$optval"
+  ;;
+  --glw-frontend=*) GLWFRONTEND="$optval"
+  ;;
+
+  --prefix=*)
+    prefix="$optval"
+  ;;
+  --bindir=*)
+    bindir="$optval"
+  ;;
+  --mandir=*)
+    mandir="$optval"
+  ;;
+  --datadir=*)
+    datadir="$optval"
+  ;;
+  --libdir=*)
+    libdir="$optval"
+  ;;
+  --includedir=*)
+    includedir="$optval"
+  ;;
+  *)
+    common_opt $opt $optval
+  ;;
+  esac
+done
+
+setup_env "$@"
+
+checkcc() {
+    cat >$TMPDIR/1.c <<EOF
+int main() {
+ return 0;
+}
+EOF
+    $CC 2>/dev/null $TMPDIR/1.c -o $TMPDIR/1.bin 
+}
+
+checkcxx() {
+    cat >$TMPDIR/1.cpp <<EOF
+int main() {
+ return 0;
+}
+EOF
+    $CXX 2>/dev/null $TMPDIR/1.cpp -o $TMPDIR/1.bin 
+}
+
+
+
+if checkcc; then 
+    echo "Using C compiler:      $CC"
+else
+    echo "C compiler ($CC) is not working"
+    die
+fi
+
+if checkcxx; then 
+    echo "Using C++ compiler:    $CXX"
+else
+    echo "C++ compiler ($CXX) is not working"
+    die
+fi
+
+
+#
+# sqlite3 - disable for Switch (requires Unix headers)
+#
+disable sqlite_internal
+disable sqlite
+echo "Sqlite3 disabled for Switch"
+
+
+#
+# libfreetype2 - enable for Switch (text rendering and subtitles)
+#
+if enabled libfreetype; then
+    brotli_setup --host=aarch64-none-elf
+    # Set environment variables for freetype to find brotli
+    export CPPFLAGS="-I${EXT_INSTALL_DIR}/include/brotli"
+    export LDFLAGS="-L${EXT_INSTALL_DIR}/lib -lbrotlidec -lbrotlienc -lbrotlicommon"
+    freetype_setup --host=aarch64-none-elf --with-png=no --with-harfbuzz=no --without-bzip2 --with-brotli
+    # Remove -lbz2 from LDFLAGS since we disabled bzip2
+    sed -i 's/-lbz2//g' ${CONFIG_MAK}
+    echo "FreeType2 enabled for Switch with brotli"
+else
+    echo "FreeType2 disabled for Switch"
+fi
+
+#
+# SMB - disable for Switch (requires crypto libraries)
+#
+disable nativesmb
+echo "SMB disabled for Switch"
+
+
+#
+# GLW frontend - enable Deko3d hardware backend for Switch
+# (Using switch_rules for proper NVN linking)
+#
+enable glw
+enable glw_settings
+enable glw_backend_deko3d
+CONFIG_GLW_BACKEND_DEKO3D=y
+echo "GLW enabled for Switch with Deko3d hardware backend"
+
+
+#
+# FFmpeg configuration
+#
+FFMPEG_CFLAGS="-march=armv8-a+crc+crypto -mtune=cortex-a57 -O2 -I${EXT_INSTALL_DIR}/include"
+FFMPEG_ARCH_FLAGS="--cross-prefix=${DEVKITA64}/bin/aarch64-none-elf- --enable-cross-compile --arch=aarch64 --cpu=cortex-a57 --target-os=linux --disable-shared --enable-static"
+FFMPEG_COMMON_FLAGS="--disable-lzma --disable-libdrm --disable-decoder=hevc --disable-decoder=opus"
+
+ext_setup
+
+
+#
+# Switch-specific defines
+#
+cat >> ${CONFIG_H} << EOF
+#define SWITCH 1
+#define ARCH_SWITCH 1
+#define _FILE_OFFSET_BITS 64
+#define CONFIG_GLW_BACKEND_DEKO3D 1
+EOF
+
+cat >> ${CONFIG_MAK} << EOF
+CFLAGS_cfg += -I${DEVKITA64}/include -I${DEVKITPRO}/portlibs/switch/include
+CFLAGS_cfg += -I${SRCROOT}/src/arch/switch
+CFLAGS_cfg += -DSWITCH
+CFLAGS_cfg += -DARCH_SWITCH
+CFLAGS_cfg += -include ${SRCROOT}/src/arch/switch/sqlite3.h
+CFLAGS_cfg += -Wno-error
+LDFLAGS_cfg += -L${DEVKITA64}/lib -L${DEVKITPRO}/portlibs/switch/lib
+LDFLAGS_cfg += -lnx -lmbedtls -lmbedx509 -lmbedcrypto
+LDFLAGS_cfg += -lharfbuzz -lbz2 -lpng
+LDFLAGS_cfg += -Wl,--as-needed
+CONFIG_GLW_BACKEND_SW=y
+CONFIG_GLW_FRONTEND_SWITCH=y
+EOF
+
+
+#
+# Finalize
+#
+finalize

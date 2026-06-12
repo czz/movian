@@ -41,9 +41,17 @@ include ${BUILDDIR}/config.mak
 CFLAGS_std += -Wall -Werror -Wwrite-strings -Wno-deprecated-declarations \
 		-Wmissing-prototypes -Wno-multichar -Iext/dvd -std=gnu99
 
+# Add deko3d include path when backend is enabled
+ifeq ($(CONFIG_GLW_BACKEND_DEKO3D),yes)
+CFLAGS_std += -I${DEVKITPRO}/libnx/include
+endif
+
+# Only add GCC-specific warnings when actually using GCC
+ifneq ($(findstring clang,$(CC)),clang)
 GCCVERSIONGTEQ8 := $(shell expr `gcc -dumpversion | cut -f1 -d.` \>= 8)
 ifeq "$(GCCVERSIONGTEQ8)" "1"
-    CFLAGS_std += -Wno-stringop-truncation 
+    CFLAGS_std += -Wno-stringop-truncation
+endif
 endif
 
 VMIR_CFLAGS = ${CFLAGS_std}
@@ -51,8 +59,11 @@ VMIR_CFLAGS = ${CFLAGS_std}
 VMIR_CFLAGS +=  -Wall -Werror -Wwrite-strings -Wno-deprecated-declarations \
 		-Wmissing-prototypes -Wno-multichar  -Iext/dvd -std=gnu99
 
+# Only add GCC-specific warnings when actually using GCC
+ifneq ($(findstring clang,$(CC)),clang)
 ifeq "$(GCCVERSIONGTEQ8)" "1"
     VMIR_CFLAGS += -Wno-restrict
+endif
 endif
 
 CFLAGS = ${CFLAGS_std} ${OPTFLAGS}
@@ -111,7 +122,7 @@ SRCS-${CONFIG_PLUGINS} += src/plugins.c
 
 SRCS-${CONFIG_MEDIA_SETTINGS} += src/media/media_settings.c
 
-SRCS-${CONFIG_LIBAV} += src/libav.c
+SRCS-${CONFIG_FFMPEG} += src/ffmpeg.c
 
 SRCS-${CONFIG_EMU_THREAD_SPECIFICS} += src/arch/emu_thread_specifics.c
 
@@ -132,11 +143,12 @@ SRCS +=	src/image/image.c \
 	src/image/pixmap.c \
 	src/image/nanosvg.c \
 	src/image/svg.c \
-	src/image/rasterizer_ft.c \
 	src/image/jpeg.c \
 	src/image/vector.c \
-	src/image/image_decoder_libav.c \
+	src/image/image_decoder_ffmpeg.c \
 	src/image/dominantcolor.c \
+
+SRCS-${CONFIG_LIBFREETYPE} += src/image/rasterizer_ft.c
 
 SRCS-${CONFIG_LIBJPEG} += src/image/libjpeg.c
 
@@ -253,8 +265,8 @@ SRCS += src/fileaccess/fileaccess.c \
 SRCS-$(CONFIG_FTPCLIENT) += src/fileaccess/fa_ftp.c \
 			    src/fileaccess/ftpparse.c \
 
-SRCS-$(CONFIG_LIBAV) += \
-	src/fileaccess/fa_libav.c \
+SRCS-$(CONFIG_FFMPEG) += \
+	src/fileaccess/fa_ffmpeg.c \
 	src/fileaccess/fa_backend.c \
 	src/fileaccess/fa_video.c \
 	src/fileaccess/fa_audio.c \
@@ -305,7 +317,7 @@ SRCS += src/networking/net_common.c \
 
 SRCS-$(CONFIG_FTPSERVER) += src/networking/ftp_server.c
 
-SRCS-$(CONFIG_POLARSSL) += src/networking/net_polarssl.c
+SRCS-$(CONFIG_MBEDTLS) += src/networking/net_mbedtls.c
 SRCS-$(CONFIG_OPENSSL)  += src/networking/net_openssl.c
 
 SRCS-$(CONFIG_HTTPSERVER) += src/networking/http_server.c
@@ -361,7 +373,7 @@ SRCS += src/text/fontstash.c
 ##############################################################
 # Audio subsys
 ##############################################################
-SRCS-$(CONFIG_LIBAV) += src/audio2/audio.c
+SRCS-$(CONFIG_FFMPEG) += src/audio2/audio.c
 
 SRCS-$(CONFIG_AUDIOTEST) += src/audio2/audio_test.c
 
@@ -447,13 +459,11 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_texture_loader.c \
 			src/ui/glw/glw_image.c \
 			src/ui/glw/glw_text_bitmap.c \
-			src/ui/glw/glw_bloom.c \
 			src/ui/glw/glw_cube.c \
 			src/ui/glw/glw_displacement.c \
 			src/ui/glw/glw_coverflow.c \
 			src/ui/glw/glw_mirror.c \
 			src/ui/glw/glw_video_common.c \
-			src/ui/glw/glw_video_overlay.c \
 			src/ui/glw/glw_bar.c \
 			src/ui/glw/glw_flicker.c \
 			src/ui/glw/glw_keyintercept.c \
@@ -483,7 +493,24 @@ SRCS-$(CONFIG_GLW_REC)            += src/ui/glw/glw_rec.c
 SRCS-$(CONFIG_GLW_FRONTEND_PS3)   += src/ui/glw/glw_ps3.c
 SRCS-$(CONFIG_GLW_BACKEND_RSX)    += src/ui/glw/glw_rsx.c
 SRCS-$(CONFIG_GLW_BACKEND_RSX)    += src/ui/glw/glw_texture_rsx.c
+
+# glw_switch.c needs special handling for Switch builds
+ifeq ($(CONFIG_GLW_FRONTEND_SWITCH),y)
+SRCS += src/ui/glw/glw_switch.c
+endif
 SRCS-$(CONFIG_GLW_BACKEND_RSX)    += src/ui/glw/glw_video_rsx.c
+
+SRCS-$(CONFIG_GLW_BACKEND_DEKO3D) += src/ui/glw/glw_deko3d.c
+SRCS-$(CONFIG_GLW_BACKEND_DEKO3D) += src/ui/glw/glw_texture_deko3d.c
+
+# glw_bloom.c and glw_video_overlay.c require GPU-specific functions (RTT, etc.)
+# Add them for OpenGL/RSX backends, exclude for Switch SW/Deko3d backends
+ifeq ($(CONFIG_GLW_BACKEND_SW),)
+ifeq ($(CONFIG_GLW_BACKEND_DEKO3D),)
+SRCS-yes += src/ui/glw/glw_bloom.c
+SRCS-yes += src/ui/glw/glw_video_overlay.c
+endif
+endif
 
 SRCS-$(CONFIG_GLW_FRONTEND_WII)	  += src/ui/glw/glw_wii.c
 SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_texture_gx.c
@@ -590,84 +617,17 @@ ${BUILDDIR}/ext/dvd/dvdnav/%.o : CFLAGS = ${OPTFLAGS} \
 
 
 ##############################################################
-# polarssl
+# mbed TLS
 ##############################################################
-SRCS-$(CONFIG_POLARSSL) += \
-	ext/polarssl-1.3/library/aes.c \
-	ext/polarssl-1.3/library/aesni.c \
-	ext/polarssl-1.3/library/arc4.c \
-	ext/polarssl-1.3/library/asn1parse.c \
-	ext/polarssl-1.3/library/asn1write.c \
-	ext/polarssl-1.3/library/base64.c \
-	ext/polarssl-1.3/library/bignum.c \
-	ext/polarssl-1.3/library/blowfish.c \
-	ext/polarssl-1.3/library/camellia.c \
-	ext/polarssl-1.3/library/ccm.c \
-	ext/polarssl-1.3/library/certs.c \
-	ext/polarssl-1.3/library/cipher.c \
-	ext/polarssl-1.3/library/cipher_wrap.c \
-	ext/polarssl-1.3/library/ctr_drbg.c \
-	ext/polarssl-1.3/library/debug.c \
-	ext/polarssl-1.3/library/des.c \
-	ext/polarssl-1.3/library/dhm.c \
-	ext/polarssl-1.3/library/ecdh.c \
-	ext/polarssl-1.3/library/ecdsa.c \
-	ext/polarssl-1.3/library/ecp.c \
-	ext/polarssl-1.3/library/ecp_curves.c \
-	ext/polarssl-1.3/library/entropy.c \
-	ext/polarssl-1.3/library/entropy_poll.c \
-	ext/polarssl-1.3/library/error.c \
-	ext/polarssl-1.3/library/gcm.c \
-	ext/polarssl-1.3/library/havege.c \
-	ext/polarssl-1.3/library/hmac_drbg.c \
-	ext/polarssl-1.3/library/md2.c \
-	ext/polarssl-1.3/library/md4.c \
-	ext/polarssl-1.3/library/md5.c \
-	ext/polarssl-1.3/library/md.c \
-	ext/polarssl-1.3/library/md_wrap.c \
-	ext/polarssl-1.3/library/memory_buffer_alloc.c \
-	ext/polarssl-1.3/library/net.c \
-	ext/polarssl-1.3/library/oid.c \
-	ext/polarssl-1.3/library/padlock.c \
-	ext/polarssl-1.3/library/pbkdf2.c \
-	ext/polarssl-1.3/library/pem.c \
-	ext/polarssl-1.3/library/pk.c \
-	ext/polarssl-1.3/library/pkcs11.c \
-	ext/polarssl-1.3/library/pkcs12.c \
-	ext/polarssl-1.3/library/pkcs5.c \
-	ext/polarssl-1.3/library/pkparse.c \
-	ext/polarssl-1.3/library/pk_wrap.c \
-	ext/polarssl-1.3/library/pkwrite.c \
-	ext/polarssl-1.3/library/platform.c \
-	ext/polarssl-1.3/library/ripemd160.c \
-	ext/polarssl-1.3/library/rsa.c \
-	ext/polarssl-1.3/library/sha1.c \
-	ext/polarssl-1.3/library/sha256.c \
-	ext/polarssl-1.3/library/sha512.c \
-	ext/polarssl-1.3/library/ssl_cache.c \
-	ext/polarssl-1.3/library/ssl_ciphersuites.c \
-	ext/polarssl-1.3/library/ssl_cli.c \
-	ext/polarssl-1.3/library/ssl_srv.c \
-	ext/polarssl-1.3/library/ssl_tls.c \
-	ext/polarssl-1.3/library/threading.c \
-	ext/polarssl-1.3/library/timing.c \
-	ext/polarssl-1.3/library/version.c \
-	ext/polarssl-1.3/library/version_features.c \
-	ext/polarssl-1.3/library/x509.c \
-	ext/polarssl-1.3/library/x509_create.c \
-	ext/polarssl-1.3/library/x509_crl.c \
-	ext/polarssl-1.3/library/x509_crt.c \
-	ext/polarssl-1.3/library/x509_csr.c \
-	ext/polarssl-1.3/library/x509write_crt.c \
-	ext/polarssl-1.3/library/x509write_csr.c \
-	ext/polarssl-1.3/library/xtea.c \
+MBEDTLS_DIR := ext/mbedtls-2.28.7
+MBEDTLS_SRCS := $(wildcard $(MBEDTLS_DIR)/library/*.c)
 
+SRCS-$(CONFIG_MBEDTLS) += $(MBEDTLS_SRCS)
 
-${BUILDDIR}/ext/polarssl-1.3/library/%.o : CFLAGS = -Wall ${OPTFLAGS}
+${BUILDDIR}/$(MBEDTLS_DIR)/library/%.o : CFLAGS = -Wall ${OPTFLAGS} -DMBEDTLS_NO_PLATFORM_ENTROPY
 
-
-ifeq ($(CONFIG_POLARSSL), yes)
-CFLAGS_com += -Iext/polarssl-1.3/include
+ifeq ($(CONFIG_MBEDTLS), yes)
+CFLAGS_com += -I$(MBEDTLS_DIR)/include
 endif
 
 ##############################################################
@@ -815,6 +775,7 @@ include src/arch/${PLATFORM}/${PLATFORM}.mk
 SRCS  += $(SRCS-yes)
 DLIBS += $(DLIBS-yes)
 SLIBS += $(SLIBS-yes)
+
 SSRCS  = $(sort $(SRCS))
 OBJS4=   $(SSRCS:%.cpp=$(BUILDDIR)/%.o)
 OBJS3=   $(OBJS4:%.S=$(BUILDDIR)/%.o)

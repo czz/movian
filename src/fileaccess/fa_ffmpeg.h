@@ -1,0 +1,42 @@
+/*
+ *  Copyright (C) 2007-2015 Lonelycoder AB
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This program is also available under a commercial proprietary license.
+ *  For more information, contact andreas@lonelycoder.com
+ */
+#pragma once
+#include "fileaccess.h"
+#include <libavformat/avio.h>
+#include <libavformat/avformat.h>
+#include "misc/cancellable.h"
+
+AVIOContext *fa_ffmpeg_reopen(fa_handle_t *fh, int no_seek, struct cancellable *cancellable);
+
+void fa_ffmpeg_close(AVIOContext *io);
+
+AVFormatContext *fa_ffmpeg_open_format(AVIOContext *avio,
+					     const char *url,
+					     char *errbuf, size_t errlen,
+					     const char *mimetype,
+                                             int strategy);
+
+#define FA_FFMPEG_OPEN_STRATEGY_AUDIO              1
+#define FA_FFMPEG_OPEN_STRATEGY_VIDEO_NON_SEEKABLE 2
+#define FA_FFMPEG_OPEN_STRATEGY_VIDEO_SEEKABLE     3
+
+void fa_ffmpeg_close_format(AVFormatContext *fctx, int park);
+
+int fa_ffmpeg_get_strategy_for_file(fa_handle_t *fh);
