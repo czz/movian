@@ -812,7 +812,7 @@ static dvd_file_t *DVDOpenVOBUDF( dvd_reader_t *dvd, int title, int menu )
   if (dvd->isImageFile == 1)
 	start = UDFFindFile( dvd, filename, &len );
   else if (dvd->isImageFile == 2)
-    start = ISOFindFile( dvd, filename, &len );
+    start = UDFFindFile( dvd, filename, &len );
   if( start == 0 ) return NULL;
 
   dvd_file = malloc( sizeof( dvd_file_t ) );
