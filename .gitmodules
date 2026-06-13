@@ -22,3 +22,7 @@
 	path = ext/ffmpeg
 	url = https://github.com/FFmpeg/FFmpeg.git
 	branch = release/7.1
+[submodule "ext/mbedtls-2.28.7"]
+	path = ext/mbedtls-2.28.7
+	url = https://github.com/ARMmbed/mbedtls.git
+	branch = mbedtls-2.28.7
