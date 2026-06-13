@@ -69,23 +69,32 @@ file_open_browse(prop_t *page, const char *url, time_t mtime,
 {
   char parent[URL_MAX];
 
+  TRACE(TRACE_INFO, "fileaccess", "file_open_browse: url=%s", url);
+
   prop_set(model, "type", PROP_SET_STRING, "directory");
   
   /* Find a meaningful page title (last component of URL) */
 
+  TRACE(TRACE_INFO, "fileaccess", "file_open_browse: calling title_from_url");
   rstr_t *title = title_from_url(url);
+  TRACE(TRACE_INFO, "fileaccess", "file_open_browse: title_from_url returned");
 
   prop_setv(model, "metadata", "title", NULL, PROP_SET_RSTRING, title);
   
   // Set parent
+  TRACE(TRACE_INFO, "fileaccess", "file_open_browse: calling fa_parent");
   if(!fa_parent(parent, sizeof(parent), url))
     prop_set(page, "parent", PROP_SET_STRING, parent);
+  TRACE(TRACE_INFO, "fileaccess", "file_open_browse: fa_parent returned");
   
   prop_t *dc = prop_create_r(page, "directClose");
 
+  TRACE(TRACE_INFO, "fileaccess", "file_open_browse: calling fa_scanner_page");
   fa_scanner_page(url, mtime, model, NULL, dc,title);
+  TRACE(TRACE_INFO, "fileaccess", "file_open_browse: fa_scanner_page returned");
   rstr_release(title);
   prop_ref_dec(dc);
+  TRACE(TRACE_INFO, "fileaccess", "file_open_browse: done");
 }
 
 /**
@@ -95,27 +104,37 @@ static void
 file_open_dir(prop_t *page, const char *url, time_t mtime,
 	      prop_t *model)
 {
+  TRACE(TRACE_INFO, "fileaccess", "file_open_dir: url=%s", url);
+
   fa_handle_t *ref = fa_reference(url);
+  TRACE(TRACE_INFO, "fileaccess", "file_open_dir: calling fa_probe_dir");
   metadata_t *md = fa_probe_dir(url);
+  TRACE(TRACE_INFO, "fileaccess", "file_open_dir: fa_probe_dir returned, contenttype=%d", md->md_contenttype);
 
   switch(md->md_contenttype) {
   case CONTENT_DVD:
+    TRACE(TRACE_INFO, "fileaccess", "file_open_dir: CONTENT_DVD, calling backend_open_video");
     backend_open_video(page, url, 0);
     break;
     
   case CONTENT_DIR:
   case CONTENT_SHARE:
   case CONTENT_ARCHIVE:
+    TRACE(TRACE_INFO, "fileaccess", "file_open_dir: CONTENT_DIR/SHARE/ARCHIVE, calling file_open_browse");
     file_open_browse(page, url, mtime, model);
+    TRACE(TRACE_INFO, "fileaccess", "file_open_dir: file_open_browse returned");
     break;
 
   default:
+    TRACE(TRACE_INFO, "fileaccess", "file_open_dir: unknown content type %d", md->md_contenttype);
     nav_open_errorf(page, _("Can't handle content type %d"),
 		    md->md_contenttype);
     break;
   }
+  TRACE(TRACE_INFO, "fileaccess", "file_open_dir: cleaning up");
   metadata_destroy(md);
   fa_unreference(ref);
+  TRACE(TRACE_INFO, "fileaccess", "file_open_dir: done");
 }
 
 
@@ -266,29 +285,41 @@ be_file_open(prop_t *page, const char *url, int sync)
   struct fa_stat fs;
   char errbuf[200];
 
+  TRACE(TRACE_INFO, "fileaccess", "be_file_open: url=%s, sync=%d", url, sync);
+
   prop_t *model = prop_create_r(page, "model");
   prop_t *loading = prop_create_r(model, "loading");
   prop_t *loading_status = prop_create_r(model, "loadingStatus");
   prop_t *io = prop_create_r(model, "io");
   prop_set_int(loading, 1);
 
+  TRACE(TRACE_INFO, "fileaccess", "be_file_open: calling fa_stat");
   if(fa_stat(url, &fs, errbuf, sizeof(errbuf))) {
+    TRACE(TRACE_INFO, "fileaccess", "be_file_open: fa_stat failed: %s", errbuf);
     nav_open_error(page, errbuf);
   } else if(fs.fs_type == CONTENT_DIR) {
+    TRACE(TRACE_INFO, "fileaccess", "be_file_open: CONTENT_DIR, calling file_open_dir");
     usage_page_open(sync, "Directory");
     file_open_dir(page, url, fs.fs_mtime, model);
+    TRACE(TRACE_INFO, "fileaccess", "be_file_open: file_open_dir returned");
   } else if(fs.fs_type == CONTENT_SHARE) {
+    TRACE(TRACE_INFO, "fileaccess", "be_file_open: CONTENT_SHARE, calling file_open_browse");
     usage_page_open(sync, "Share");
     file_open_browse(page, url, fs.fs_mtime, model);
+    TRACE(TRACE_INFO, "fileaccess", "be_file_open: file_open_browse returned");
   } else {
+    TRACE(TRACE_INFO, "fileaccess", "be_file_open: FILE, calling file_open_file");
     usage_page_open(sync, "File");
     file_open_file(page, url, &fs, model, loading, io, loading_status);
+    TRACE(TRACE_INFO, "fileaccess", "be_file_open: file_open_file returned");
   }
 
+  TRACE(TRACE_INFO, "fileaccess", "be_file_open: cleaning up props");
   prop_ref_dec(model);
   prop_ref_dec(loading);
   prop_ref_dec(loading_status);
   prop_ref_dec(io);
+  TRACE(TRACE_INFO, "fileaccess", "be_file_open: done");
   return 0;
 }
 

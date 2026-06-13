@@ -303,18 +303,27 @@ analyzer(scanner_t *s, int probe)
 {
   fa_dir_entry_t *fde;
 
+  TRACE(TRACE_INFO, "fileaccess", "analyzer: starting, probe=%d, fd_count=%d", probe, s->s_fd->fd_count);
+
   /* Empty */
   if(s->s_fd->fd_count == 0)
     return;
   
-  if(probe)
+  if(probe) {
+    TRACE(TRACE_INFO, "fileaccess", "analyzer: calling tryplay");
     tryplay(s);
+    TRACE(TRACE_INFO, "fileaccess", "analyzer: tryplay returned");
+  }
 
   /* Scan all entries */
   RB_FOREACH(fde, &s->s_fd->fd_entries, fde_link) {
 
-    while(media_buffer_hungry && s->s_running)
+    TRACE(TRACE_INFO, "fileaccess", "analyzer: checking media_buffer_hungry");
+    while(media_buffer_hungry && s->s_running) {
+      TRACE(TRACE_INFO, "fileaccess", "analyzer: media_buffer_hungry is true, sleeping");
       sleep(1);
+    }
+    TRACE(TRACE_INFO, "fileaccess", "analyzer: media_buffer_hungry check done");
 
     if(!s->s_running)
       break;
@@ -329,6 +338,7 @@ analyzer(scanner_t *s, int probe)
     if(fde->fde_probestatus == FDE_PROBED_FILENAME && probe)
       deep_probe(fde, s);
   }
+  TRACE(TRACE_INFO, "fileaccess", "analyzer: done");
 }
 
 
@@ -536,11 +546,18 @@ doscan(scanner_t *s)
   int pending_rescan = 0;
   int err = 1;
 
+  TRACE(TRACE_INFO, "fileaccess", "doscan: starting for %s", s->s_url);
+
   assert(s->s_fd == NULL);
+  
+  TRACE(TRACE_INFO, "fileaccess", "doscan: calling metadb_metadata_scandir");
   s->s_fd = metadb_metadata_scandir(getdb(s), s->s_url, NULL);
+  TRACE(TRACE_INFO, "fileaccess", "doscan: metadb_metadata_scandir returned");
 
   if(s->s_fd == NULL) {
+    TRACE(TRACE_INFO, "fileaccess", "doscan: calling fa_scandir");
     s->s_fd = fa_scandir(s->s_url, errbuf, sizeof(errbuf));
+    TRACE(TRACE_INFO, "fileaccess", "doscan: fa_scandir returned");
     if(s->s_fd != NULL) {
       SCAN_TRACE(s, "%s: Found %d by directory scanning",
               s->s_url, s->s_fd->fd_count);
@@ -562,8 +579,9 @@ doscan(scanner_t *s)
   prop_set_int(s->s_loading, 0);
 
   if(s->s_fd != NULL) {
-
+    TRACE(TRACE_INFO, "fileaccess", "doscan: calling analyzer(s, 0)");
     analyzer(s, 0);
+    TRACE(TRACE_INFO, "fileaccess", "doscan: analyzer(s, 0) returned");
 
     if(s->s_nodes != NULL) {
 
@@ -577,7 +595,9 @@ doscan(scanner_t *s)
       prop_set_parent_vector(pv, s->s_nodes, NULL, NULL);
       prop_vec_release(pv);
     }
+    TRACE(TRACE_INFO, "fileaccess", "doscan: calling analyzer(s, 1)");
     analyzer(s, 1);
+    TRACE(TRACE_INFO, "fileaccess", "doscan: analyzer(s, 1) returned");
 
   } else {
     TRACE(TRACE_INFO, "scanner",
@@ -588,11 +608,15 @@ doscan(scanner_t *s)
 
   if(pending_rescan) {
     SCAN_TRACE(s, "%s: Starting rescan", s->s_url);
+    TRACE(TRACE_INFO, "fileaccess", "doscan: calling rescan");
     err = rescan(s);
+    TRACE(TRACE_INFO, "fileaccess", "doscan: rescan returned");
     SCAN_TRACE(s, "%s: Rescan completed: %d", s->s_url, err);
   }
 
+  TRACE(TRACE_INFO, "fileaccess", "doscan: calling closedb");
   closedb(s);
+  TRACE(TRACE_INFO, "fileaccess", "doscan: closedb returned");
 
 #if 0
   fa_handle_t *n = fa_notify_start(s->s_url, s, scanner_notification);
@@ -604,6 +628,7 @@ doscan(scanner_t *s)
     fa_notify_stop(n);
 #endif
   fa_dir_free(s->s_fd);
+  TRACE(TRACE_INFO, "fileaccess", "doscan: done");
   return err;
 }
 
@@ -631,14 +656,26 @@ scanner_thread(void *aux)
 {
   scanner_t *s = aux;
 
+  TRACE(TRACE_INFO, "fileaccess", "scanner_thread: starting");
+
   prop_set(s->s_model, "contents", PROP_SET_VOID);
   prop_set(s->s_model, "canPaste", PROP_SET_INT, 1);
+  
+  TRACE(TRACE_INFO, "fileaccess", "scanner_thread: calling browse_as_dir");
   browse_as_dir(s);
+  TRACE(TRACE_INFO, "fileaccess", "scanner_thread: browse_as_dir returned");
+  
+  TRACE(TRACE_INFO, "fileaccess", "scanner_thread: calling doscan");
   doscan(s);
+  TRACE(TRACE_INFO, "fileaccess", "scanner_thread: doscan returned");
 
+  TRACE(TRACE_INFO, "fileaccess", "scanner_thread: calling cleanup_model");
   cleanup_model(s);
+  TRACE(TRACE_INFO, "fileaccess", "scanner_thread: cleanup_model returned");
 
+  TRACE(TRACE_INFO, "fileaccess", "scanner_thread: calling closedb");
   closedb(s);
+  TRACE(TRACE_INFO, "fileaccess", "scanner_thread: closedb returned");
 
   free(s->s_playme);
 
@@ -648,6 +685,7 @@ scanner_thread(void *aux)
   prop_ref_dec(s->s_direct_close);
   rstr_release(s->s_title);
   scanner_release(s);
+  TRACE(TRACE_INFO, "fileaccess", "scanner_thread: done");
   return NULL;
 }
 
@@ -1027,11 +1065,14 @@ fa_scanner_page(const char *url, time_t url_mtime,
                 prop_t *model, const char *playme,
                 prop_t *direct_close, rstr_t *title)
 {
+  TRACE(TRACE_INFO, "fileaccess", "fa_scanner_page: url=%s", url);
+
   scanner_t *s = scanner_create(url, url_mtime, gconf.enable_fa_scanner_debug);
+  TRACE(TRACE_INFO, "fileaccess", "fa_scanner_page: scanner_create returned");
 
   /* One reference to the scanner thread
      and one to the scanner_stop subscription
-  */
+   */
   atomic_set(&s->s_refcount, 2);
 
   s->s_playme = rstr_alloc(playme);
@@ -1043,10 +1084,12 @@ fa_scanner_page(const char *url, time_t url_mtime,
   s->s_direct_close = prop_ref_inc(direct_close);
   s->s_title = rstr_dup(title);
 
+  TRACE(TRACE_INFO, "fileaccess", "fa_scanner_page: creating prop_nf");
   s->s_pnf = prop_nf_create(prop_create(s->s_model, "nodes"),
                             s->s_nodes,
                             prop_create(s->s_model, "filter"),
                             PROP_NF_AUTODESTROY);
+  TRACE(TRACE_INFO, "fileaccess", "fa_scanner_page: prop_nf created");
 
   prop_set(s->s_model, "canFilter", PROP_SET_INT, 1);
 
@@ -1054,14 +1097,22 @@ fa_scanner_page(const char *url, time_t url_mtime,
 		       PROP_NF_CMP_EQ, 1, NULL, 
 		       PROP_NF_MODE_EXCLUDE);
 
-  if(gconf.enable_indexer)
+  TRACE(TRACE_INFO, "fileaccess", "fa_scanner_page: checking enable_indexer");
+  if(gconf.enable_indexer) {
+    TRACE(TRACE_INFO, "fileaccess", "fa_scanner_page: calling add_include_in_library");
     add_include_in_library(s, s->s_model);
+    TRACE(TRACE_INFO, "fileaccess", "fa_scanner_page: add_include_in_library returned");
+  }
 
+  TRACE(TRACE_INFO, "fileaccess", "fa_scanner_page: calling add_sort_option_type");
   add_sort_option_type(s, s->s_model);
+  TRACE(TRACE_INFO, "fileaccess", "fa_scanner_page: calling add_sort_option_dirfirst");
   add_sort_option_dirfirst(s, s->s_model);
 
+  TRACE(TRACE_INFO, "fileaccess", "fa_scanner_page: calling add_only_supported_files");
   prop_t *onlysupported;
   add_only_supported_files(s, s->s_model, &onlysupported);
+  TRACE(TRACE_INFO, "fileaccess", "fa_scanner_page: add_only_supported_files returned");
   prop_nf_pred_str_add(s->s_pnf, "node.type",
 		       PROP_NF_CMP_EQ, "unknown", onlysupported, 
 		       PROP_NF_MODE_EXCLUDE);
@@ -1070,14 +1121,19 @@ fa_scanner_page(const char *url, time_t url_mtime,
 		       PROP_NF_CMP_EQ, "file", onlysupported, 
 		       PROP_NF_MODE_EXCLUDE);
 
-
+  TRACE(TRACE_INFO, "fileaccess", "fa_scanner_page: calling fa_reference");
   s->s_ref = fa_reference(s->s_url);
+  TRACE(TRACE_INFO, "fileaccess", "fa_scanner_page: fa_reference returned");
 
+  TRACE(TRACE_INFO, "fileaccess", "fa_scanner_page: calling prop_subscribe");
   prop_subscribe(PROP_SUB_TRACK_DESTROY,
                  PROP_TAG_CALLBACK, scanner_nodes_callback, s,
                  PROP_TAG_ROOT, s->s_nodes,
                  PROP_TAG_COURIER, s->s_pc,
                  NULL);
+  TRACE(TRACE_INFO, "fileaccess", "fa_scanner_page: prop_subscribe returned");
 
+  TRACE(TRACE_INFO, "fileaccess", "fa_scanner_page: calling scanner_thread");
   scanner_thread(s);
+  TRACE(TRACE_INFO, "fileaccess", "fa_scanner_page: scanner_thread returned");
 }

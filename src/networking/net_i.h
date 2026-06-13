@@ -25,10 +25,14 @@
 #if ENABLE_OPENSSL
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-#elif ENABLE_POLARSSL
-#include "polarssl/net.h"
-#include "polarssl/ssl.h"
-#include "polarssl/havege.h"
+#elif ENABLE_MBEDTLS
+//#include "mbedtls/net_sockets.h"
+#include "mbedtls/ssl.h"
+//#include "mbedtls/havege.h"
+//#include "mbedtls/compat-1.3.h"
+#include <mbedtls/entropy.h>
+#include <mbedtls/ctr_drbg.h>
+
 #elif defined(__APPLE__)
 #include <Security/SecureTransport.h>
 #else
@@ -48,9 +52,16 @@ struct tcpcon {
 
 #if ENABLE_OPENSSL
   SSL *ssl;
-#elif ENABLE_POLARSSL
-  ssl_context *ssl;
-  void *rndstate;
+#elif ENABLE_MBEDTLS
+//  ssl_context *ssl;
+//  void *rndstate;
+
+mbedtls_ssl_context ssl;
+mbedtls_ssl_config conf;
+mbedtls_ctr_drbg_context ctr_drbg;
+mbedtls_entropy_context entropy;
+  int ssl_active;
+
 #elif defined(__APPLE__)
   SSLContextRef ssl;
 #endif

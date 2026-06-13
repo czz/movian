@@ -253,7 +253,7 @@ image_decode_coded(const image_t *src, const image_meta_t *meta,
                             src);
 
   if(pm == NULL)
-    pm = image_decode_libav(icc->icc_type, icc->icc_buf, meta, errbuf, errlen);
+    pm = image_decode_ffmpeg(icc->icc_type, icc->icc_buf, meta, errbuf, errlen);
 
   if(pm == NULL)
     return NULL;

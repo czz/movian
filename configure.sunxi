@@ -35,7 +35,7 @@ setup_env "$@"
 enable sqlite_internal
 enable glw_backend_opengl_es
 enable glw
-#enable polarssl
+enable mbedtls
 #enable librtmp
 enable httpserver
 #enable dvd
@@ -46,16 +46,16 @@ enable bspatch
 enable sunxi
 enable cedar
 
-LIBAV_CFLAGS="-I${EXT_INSTALL_DIR}/include"
-LIBAV_LDFLAGS="-L${EXT_INSTALL_DIR}/lib"
-LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=arm --target-os=linux --enable-neon"
+FFMPEG_CFLAGS="-I${EXT_INSTALL_DIR}/include"
+FFMPEG_LDFLAGS="-L${EXT_INSTALL_DIR}/lib"
+FFMPEG_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=arm --target-os=linux --enable-neon"
 
 if [ -n "$SYSROOT" ]; then 
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += --sysroot=$SYSROOT"
     echo >>${CONFIG_MAK} "CFLAGS_cfg += --sysroot=$SYSROOT"
 
-    LIBAV_CFLAGS="--sysroot=$SYSROOT ${LIBAV_CFLAGS}"
-    LIBAV_LDFLAGS="--sysroot=$SYSROOT ${LIBAV_LDFLAGS}"
+    FFMPEG_CFLAGS="--sysroot=$SYSROOT ${FFMPEG_CFLAGS}"
+    FFMPEG_LDFLAGS="--sysroot=$SYSROOT ${FFMPEG_LDFLAGS}"
 
     export PKG_CONFIG_SYSROOT_DIR="$SYSROOT"
     export PKG_CONFIG_LIBDIR="$SYSROOT/usr/lib/pkgconfig"
@@ -90,10 +90,14 @@ else
     zlib_setup
     bzip2_setup
     freetype_setup --host=arm-linux-gnueabihf
+
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lharfbuzz"
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lpng16"
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lbrotlidec"
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lasound"
 fi
 
-
-libav_setup
+ext_setup
 rtmpdump_setup
 gumbo_setup
 

@@ -33,7 +33,7 @@
 #include "event.h"
 #include "media/media.h"
 #include "fileaccess.h"
-#include "fa_libav.h"
+#include "fa_ffmpeg.h"
 #include "notifications.h"
 #include "metadata/playinfo.h"
 #include "misc/minmax.h"
@@ -124,7 +124,6 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
                   void *opaque)
 {
   AVFormatContext *fctx;
-  AVCodecContext *ctx;
   AVPacket pkt;
   media_format_t *fw;
   int i, r, si;
@@ -132,7 +131,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   media_queue_t *mq;
   event_ts_t *ets;
   int64_t ts;
-  media_codec_t *cw;
+  media_codec_t *cw = NULL;
   event_t *e;
   int registered_play = 0;
   uint8_t pb[4096];
@@ -181,16 +180,16 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   metadata_destroy(md);
 #endif
 
-  AVIOContext *avio = fa_libav_reopen(fh, 0);
+  AVIOContext *avio = fa_ffmpeg_reopen(fh, 0, NULL);
 
   if(avio == NULL) {
     fa_close(fh);
     return NULL;
   }
 
-  if((fctx = fa_libav_open_format(avio, url, errbuf, errlen, mimetype,
-                                  FA_LIBAV_OPEN_STRATEGY_AUDIO)) == NULL) {
-    fa_libav_close(avio);
+  if((fctx = fa_ffmpeg_open_format(avio, url, errbuf, errlen, mimetype,
+                                  FA_FFMPEG_OPEN_STRATEGY_AUDIO)) == NULL) {
+    fa_ffmpeg_close(avio);
     return NULL;
   }
 
@@ -206,14 +205,14 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
   fw = media_format_create(fctx);
 
-  cw = NULL;
   for(i = 0; i < fctx->nb_streams; i++) {
-    ctx = fctx->streams[i]->codec;
+    AVCodecParameters *codecpar = fctx->streams[i]->codecpar;
 
-    if(ctx->codec_type != AVMEDIA_TYPE_AUDIO)
+    if(codecpar->codec_type != AVMEDIA_TYPE_AUDIO)
       continue;
 
-    cw = media_codec_create(ctx->codec_id, 0, fw, ctx, NULL, mp);
+    TRACE(TRACE_INFO, "ffmpeg", "Audio stream %d: codec_id=%d", i, codecpar->codec_id);
+    cw = media_codec_create(codecpar->codec_id, 0, fw, codecpar, NULL, mp);
     mp->mp_audio.mq_stream = i;
     break;
   }
@@ -250,7 +249,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
       
       if(r != 0) {
 	char msg[100];
-	fa_libav_error_to_txt(r, msg, sizeof(msg));
+	fa_ffmpeg_error_to_txt(r, msg, sizeof(msg));
 	TRACE(TRACE_ERROR, "Audio", "Playback error: %s", msg);
 
 	while((e = mp_wait_for_empty_queues(mp)) != NULL) {
@@ -271,7 +270,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
       si = pkt.stream_index;
 
       if(si != mp->mp_audio.mq_stream) {
-	av_free_packet(&pkt);
+	av_packet_unref(&pkt);
 	continue;
       }
 
@@ -291,7 +290,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 	mb->mb_drive_clock = 1;
       }
 
-      av_free_packet(&pkt);
+      av_packet_unref(&pkt);
     }
 
     /*
@@ -362,8 +361,10 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   if(mb != NULL && mb != MB_SPECIAL_EOF)
     media_buf_free_unlocked(mp, mb);
 
-  media_codec_deref(cw);
-  media_format_deref(fw);
+  if(cw != NULL)
+    media_codec_deref(cw);
+  if(fw != NULL)
+    media_format_deref(fw);
 
   return e;
 }

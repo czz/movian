@@ -33,6 +33,7 @@
 #include "fileaccess/fileaccess.h"
 #include "misc/str.h"
 #include "usage.h"
+#include "db/kvstore.h"
 
 static HTS_MUTEX_DECL(video_queue_mutex);
 
@@ -969,8 +970,12 @@ video_player_idle(void *aux)
     video_queue_destroy(vq);
   prop_ref_dec(item_model);
   prop_ref_dec(errprop);
+  kvstore_deferred_flush();
+  TRACE(TRACE_INFO, "video", "video_player_idle: calling mp_shutdown");
   mp_shutdown(mp);
+  TRACE(TRACE_INFO, "video", "video_player_idle: calling mp_release");
   mp_release(mp);
+  TRACE(TRACE_INFO, "video", "video_player_idle: done");
   return NULL;
 }
 
@@ -992,6 +997,7 @@ video_playback_create(media_pipe_t *mp)
 void
 video_playback_destroy(media_pipe_t *mp)
 {
+  cancellable_cancel(mp->mp_cancellable);
   event_t *e = event_create_type(EVENT_EXIT);
   mp_enqueue_event(mp, e);
   event_release(e);

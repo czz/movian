@@ -28,7 +28,7 @@
 #include "media/media.h"
 #include "fileaccess/fileaccess.h"
 #include "fileaccess/fa_proto.h"
-#include "fileaccess/fa_libav.h"
+#include "fileaccess/fa_ffmpeg.h"
 #include "misc/str.h"
 #include "misc/cancellable.h"
 #include "htsmsg/htsmsg_xml.h"
@@ -345,7 +345,7 @@ open_stream(icecast_play_context_t *ipc)
       fh = icy_meta_parser(ipc, fh, stride);
   }
 
-  AVIOContext *avio = fa_libav_reopen(fh, 1);
+  AVIOContext *avio = fa_ffmpeg_reopen(fh, 1, ipc->ipc_mp->mp_cancellable);
 
   if(avio == NULL) {
     fa_close(fh);
@@ -354,15 +354,15 @@ open_stream(icecast_play_context_t *ipc)
 
   const char *ct = http_header_get(&ipc->ipc_response_headers, "content-type");
 
-  if((fctx = fa_libav_open_format(avio, url, errbuf, sizeof(errbuf), ct,
-                                  FA_LIBAV_OPEN_STRATEGY_AUDIO)) == NULL) {
+  if((fctx = fa_ffmpeg_open_format(avio, url, errbuf, sizeof(errbuf), ct,
+                                  FA_FFMPEG_OPEN_STRATEGY_AUDIO)) == NULL) {
 
     if(!cancellable_is_cancelled(ipc->ipc_mp->mp_cancellable)) {
       TRACE(TRACE_ERROR, "Radio", "Unable to open %s -- %s",
             ipc->ipc_url, errbuf);
     }
 
-    fa_libav_close(avio);
+    fa_ffmpeg_close(avio);
     return -1;
   }
 
@@ -379,12 +379,12 @@ open_stream(icecast_play_context_t *ipc)
   ipc->ipc_mc = NULL;
 
   for(int i = 0; i < fctx->nb_streams; i++) {
-    AVCodecContext *ctx = fctx->streams[i]->codec;
+    AVCodecParameters *codecpar = fctx->streams[i]->codecpar;
 
-    if(ctx->codec_type != AVMEDIA_TYPE_AUDIO)
+    if(codecpar->codec_type != AVMEDIA_TYPE_AUDIO)
       continue;
 
-    ipc->ipc_mc = media_codec_create(ctx->codec_id, 0, ipc->ipc_mf, ctx, NULL,
+    ipc->ipc_mc = media_codec_create(codecpar->codec_id, 0, ipc->ipc_mf, codecpar, NULL,
                                      ipc->ipc_mp);
     ipc->ipc_mp->mp_audio.mq_stream = i;
     break;
@@ -494,7 +494,7 @@ stream_radio(icecast_play_context_t *ipc, char *errbuf, size_t errlen)
       if(r != 0) {
         if(r != AVERROR_EOF) {
           char msg[100];
-          fa_libav_error_to_txt(r, msg, sizeof(msg));
+          fa_ffmpeg_error_to_txt(r, msg, sizeof(msg));
           TRACE(TRACE_ERROR, "Radio", "Playback error: %s (%d)", msg, r);
         }
         close_stream(ipc);
@@ -522,7 +522,7 @@ stream_radio(icecast_play_context_t *ipc, char *errbuf, size_t errlen)
       si = pkt.stream_index;
 
       if(si != mp->mp_audio.mq_stream) {
-	av_free_packet(&pkt);
+	av_packet_unref(&pkt);
 	continue;
       }
 
@@ -547,7 +547,7 @@ stream_radio(icecast_play_context_t *ipc, char *errbuf, size_t errlen)
 	mb->mb_drive_clock = 1;
       }
 
-      av_free_packet(&pkt);
+      av_packet_unref(&pkt);
     }
 
     /*
@@ -749,9 +749,11 @@ icymeta_parse(icecast_play_context_t *ipc, const char *buf)
       int tlen = end - title;
       rstr_t *t = rstr_from_bytes_len(title, tlen, how, sizeof(how));
 
-      if(gconf.enable_icecast_debug)
+      if(gconf.enable_icecast_debug) {
+        const char *t_str = t ? rstr_get(t) : "<null>";
         TRACE(TRACE_DEBUG, "Radio", "Title decoded as '%s' to '%s'",
-              how, rstr_get(t));
+              how, t_str);
+      }
 
       const char *title_tag = strstr(rstr_get(t), "<mus_sng_title>");
       if(title_tag != NULL) {

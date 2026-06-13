@@ -96,7 +96,7 @@ enable avahi
 enable libxss
 enable libxv
 enable openssl
-#enable polarssl
+#enable mbedtls
 enable locatedb
 enable vdpau
 enable libxxf86vm
@@ -515,10 +515,11 @@ if enabled avahi; then
 fi
 
 #
-# polarssl
+# mbedtls
 #
-if enabled polarssl; then
+if enabled mbedtls; then
     disable openssl
+    disable librtmp
 fi
 
 #
@@ -535,7 +536,7 @@ if enabled openssl; then
     else
 	echo "libssl or openssl not found"
 	echo "To compile without it, configure with: --disable-ssl"
-	echo "To build with built-in version of polarssl, configure with --enable-polarssl"
+	echo "To build with bundled version of mbed TLS, configure with --enable-mbedtls"
 	die
     fi
 fi
@@ -576,7 +577,7 @@ if pkg-config valgrind; then
 fi
 
 
-LIBAV_ARCH_FLAGS="--disable-shared --enable-static"
+FFMPEG_ARCH_FLAGS="--disable-shared --enable-static"
 ext_setup
 
 #

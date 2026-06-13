@@ -662,7 +662,7 @@ static dvd_file_t *DVDOpenFileUDF( dvd_reader_t *dvd, char *filename )
   if (dvd->isImageFile == 1)
 	start = UDFFindFile( dvd, filename, &len );
   else if (dvd->isImageFile == 2)
-    start = ISOFindFile( dvd, filename, &len );
+    start = UDFFindFile( dvd, filename, &len );
   if( !start ) {
     fprintf( stderr, "libdvdread:DVDOpenFileUDF:UDFFindFile %s failed\n", filename );
     return NULL;

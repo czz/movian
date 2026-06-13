@@ -29,7 +29,7 @@ typedef struct media_codec {
   struct media_format *fw;
   int codec_id;
 
-  struct AVCodecContext *fmt_ctx;     // Context owned by AVFormatContext
+  struct AVCodecParameters *codec_par; // Parameters from AVStream
   struct AVCodecContext *ctx;         // Context owned by decoder thread
 
   struct AVCodecParserContext *parser_ctx;
@@ -116,7 +116,7 @@ typedef struct media_format {
   struct AVFormatContext *fctx;
 } media_format_t;
 
-#if ENABLE_LIBAV
+#if ENABLE_FFMPEG
 
 media_format_t *media_format_create(struct AVFormatContext *fctx);
 
@@ -133,7 +133,7 @@ media_codec_t *media_codec_ref(media_codec_t *cw);
 
 media_codec_t *media_codec_create(int codec_id, int parser,
 				  struct media_format *fw, 
-				  struct AVCodecContext *ctx,
+				  struct AVCodecParameters *par,
 				  const media_codec_params_t *mcp,
                                   struct media_pipe *mp);
 

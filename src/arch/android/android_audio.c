@@ -408,7 +408,8 @@ android_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
 
     uint8_t *data[8] = {0};
     data[0] = d->d_pcmbuf + d->d_write_ptr * d->d_pcmbuf_size;
-    avresample_read(ad->ad_avr, data, ad->ad_tile_size);
+    if(ad->ad_avr != NULL)
+      avresample_read(ad->ad_avr, data, ad->ad_tile_size);
 
     if(pts != PTS_UNSET) {
       d->d_timestamp[d->d_write_ptr] = pts;

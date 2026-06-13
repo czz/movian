@@ -588,7 +588,8 @@ rpi_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
   OMX_BUFFERHEADERTYPE *buf;
 
   if(ad->ad_discontinuity && pts == PTS_UNSET && ad->ad_mp->mp_extra != NULL) {
-    avresample_read(ad->ad_avr, NULL, samples);
+    if(ad->ad_avr != NULL)
+      avresample_read(ad->ad_avr, NULL, samples);
     return 0;
   }
 
@@ -609,7 +610,7 @@ rpi_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
   } else {
     data[0] = (uint8_t *)buf->pBuffer;
   }
-  int r = avresample_read(ad->ad_avr, data, samples);
+  int r = ad->ad_avr != NULL ? avresample_read(ad->ad_avr, data, samples) : 0;
 
   hts_mutex_unlock(&ad->ad_mp->mp_mutex);
 

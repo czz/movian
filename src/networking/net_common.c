@@ -543,8 +543,13 @@ tcp_connect(const char *hostname, int port,
 void
 tcp_close(tcpcon_t *tc)
 {
+#if ENABLE_MBEDTLS
+  if(tc->ssl_active)
+    tcp_ssl_close(tc);
+#else
   if(tc->ssl != NULL)
     tcp_ssl_close(tc);
+#endif
 
   tcp_set_cancellable(tc, NULL);
 
@@ -554,7 +559,6 @@ tcp_close(tcpcon_t *tc)
 
   free(tc);
 }
-
 
 int
 net_is_addr_in_netif(const netif_t *ni, const net_addr_t *na)

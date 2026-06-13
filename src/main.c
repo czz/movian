@@ -61,7 +61,7 @@
 
 #include "networking/asyncio.h"
 
-#if ENABLE_LIBAV
+#if ENABLE_FFMPEG
 #include <libavformat/avformat.h>
 #include <libavformat/version.h>
 #include <libavcodec/version.h>
@@ -78,31 +78,7 @@ static LIST_HEAD(, inithelper) inithelpers;
 
 gconf_t gconf;
 
-#if ENABLE_LIBAV
-static int
-fflockmgr(void **_mtx, enum AVLockOp op)
-{
-  hts_mutex_t **mtx = (hts_mutex_t **)_mtx;
-
-  switch(op) {
-  case AV_LOCK_CREATE:
-    *mtx = malloc(sizeof(hts_mutex_t));
-    hts_mutex_init(*mtx);
-    break;
-  case AV_LOCK_OBTAIN:
-    hts_mutex_lock(*mtx);
-    break;
-  case AV_LOCK_RELEASE:
-    hts_mutex_unlock(*mtx);
-    break;
-  case AV_LOCK_DESTROY:
-    hts_mutex_destroy(*mtx);
-    free(*mtx);
-    break;
-  }
-  return 0;
-}
-
+#if ENABLE_FFMPEG
 
 /**
  *
@@ -113,7 +89,7 @@ fflog(void *ptr, int level, const char *fmt, va_list vl)
   static char line[1024];
   AVClass *avc = ptr ? *(AVClass**)ptr : NULL;
 
-  if(!gconf.libavlog)
+  if(!gconf.ffmpeg_log)
     return;
 
   if(level < AV_LOG_WARNING) {
@@ -133,7 +109,7 @@ fflog(void *ptr, int level, const char *fmt, va_list vl)
     return;
   line[strlen(line)-1] = 0;
 
-  TRACE(level, avc ? avc->item_name(ptr) : "libav", "%s", line);
+  TRACE(level, avc ? avc->item_name(ptr) : "ffmpeg", "%s", line);
   line[0] = 0;
 }
 #endif
@@ -448,13 +424,11 @@ main_init(void)
   /* Initialize keyring */
   keyring_init();
 
-#if ENABLE_LIBAV
+#if ENABLE_FFMPEG
   /* Initialize libavcodec & libavformat */
-  av_lockmgr_register(fflockmgr);
   av_log_set_callback(fflog);
-  av_register_all();
 
-  TRACE(TRACE_INFO, "libav", LIBAVFORMAT_IDENT", "LIBAVCODEC_IDENT", "LIBAVUTIL_IDENT" cpuflags:0x%x", av_get_cpu_flags());
+  TRACE(TRACE_INFO, "libav", "%s %s %s", LIBAVFORMAT_IDENT, LIBAVCODEC_IDENT, LIBAVUTIL_IDENT);
 #endif
 
   init_group(INIT_GROUP_GRAPHICS);
@@ -541,7 +515,7 @@ parse_opts(int argc, char **argv)
 	     "   -d                  - Enable debug output.\n"
 	     "   --no-ui             - Start without UI.\n"
 	     "   --fullscreen        - Start in fullscreen mode.\n"
-	     "   --libav-log         - Print libav log messages.\n"
+	     "   --ffmpeg-log        - Print FFmpeg log messages.\n"
 	     "   --with-standby      - Enable system standby.\n"
 	     "   --with-poweroff     - Enable system power-off.\n"
 	     "   -s <path>           - Non-default settings path.\n"
@@ -579,8 +553,8 @@ parse_opts(int argc, char **argv)
       gconf.trace_level = TRACE_DEBUG;
       argc -= 1; argv += 1;
       continue;
-    } else if(!strcmp(argv[0], "--libav-log")) {
-      gconf.libavlog = 1;
+    } else if(!strcmp(argv[0], "--ffmpeg-log")) {
+      gconf.ffmpeg_log = 1;
       argc -= 1; argv += 1;
       continue;
     } else if(!strcmp(argv[0], "--debug-glw")) {

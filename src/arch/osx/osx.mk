@@ -21,7 +21,7 @@ SRCS += src/htsmsg/persistent_file.c
 
 SRCS-$(CONFIG_WEBPOPUP) += src/arch/osx/osx_webpopup.m
 
-SRCS-$(CONFIG_LIBAV) +=	src/audio2/mac_audio.c
+SRCS-$(CONFIG_FFMPEG) +=	src/audio2/mac_audio.c
 
 DVDCSS_CFLAGS = -DDARWIN_DVD_IOCTL -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
 

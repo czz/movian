@@ -15,7 +15,7 @@ export LDFLAGS="-arch $CC_ARCH -mmacosx-version-min=$OSX_TARGET -isysroot $OSX_S
   make install \
   )
 
-(cd libav* && \
+(cd ffmpeg* && \
   ./configure "--prefix=$INSTALLDIR" \
     --disable-encoders \
     --disable-bsfs \

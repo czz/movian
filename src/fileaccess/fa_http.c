@@ -22,7 +22,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
-#if ENABLE_LIBAV
+#if ENABLE_FFMPEG
 #include <libavutil/base64.h>
 #endif
 #include <assert.h>
@@ -1539,7 +1539,7 @@ authenticate(http_file_t *hf, char *errbuf, size_t errlen, int *non_interactive,
 
     /* Got auth credentials */  
     snprintf(buf1, sizeof(buf1), "%s:%s", username, password);
-#if ENABLE_LIBAV
+#if ENABLE_FFMPEG
     av_base64_encode(buf2, sizeof(buf2), (uint8_t *)buf1, strlen(buf1));
 #else
     abort();

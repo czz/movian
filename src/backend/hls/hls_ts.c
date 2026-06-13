@@ -23,7 +23,7 @@
 #include <libavcodec/avcodec.h>
 #include <libavutil/mathematics.h>
 
-#include "fileaccess/fa_libav.h"
+#include "fileaccess/fa_ffmpeg.h"
 #include "media/media.h"
 #include "backend/backend.h"
 #include "misc/minmax.h"
@@ -554,7 +554,6 @@ rescale(int64_t ts)
 static void
 probe_duration(ts_es_t *te, uint8_t *data, int size)
 {
-  int got_frame = 0;
   AVPacket pkt = {
     .data = data,
     .size = size
@@ -563,7 +562,7 @@ probe_duration(ts_es_t *te, uint8_t *data, int size)
 
   media_codec_t *mc = te->te_codec;
 
-  AVCodec *codec = avcodec_find_decoder(mc->codec_id);
+  const AVCodec *codec = avcodec_find_decoder(mc->codec_id);
   if(codec == NULL) {
     te->te_probe_frame = 0;
     return;
@@ -579,17 +578,27 @@ probe_duration(ts_es_t *te, uint8_t *data, int size)
 
   AVFrame *frame = av_frame_alloc();
 
-  avcodec_decode_audio4(ctx, frame, &got_frame, &pkt);
-
-  if(got_frame) {
+  int ret = avcodec_send_packet(ctx, &pkt);
+  if(ret < 0) {
+    avcodec_free_context(&ctx);
+    av_frame_free(&frame);
     te->te_probe_frame = 0;
-    te->te_samples_per_frame = frame->nb_samples;
-    te->te_sample_rate = frame->sample_rate;
-    te->te_samples = 0;
+    return;
+  }
+  ret = avcodec_receive_frame(ctx, frame);
+  if(ret < 0) {
+    avcodec_free_context(&ctx);
+    av_frame_free(&frame);
+    te->te_probe_frame = 0;
+    return;
   }
 
-  avcodec_close(ctx);
-  av_freep(&ctx);
+  te->te_probe_frame = 0;
+  te->te_samples_per_frame = frame->nb_samples;
+  te->te_sample_rate = frame->sample_rate;
+  te->te_samples = 0;
+
+  avcodec_free_context(&ctx);
 
   av_frame_free(&frame);
 }
@@ -735,7 +744,7 @@ parse_data(ts_demuxer_t *td, hls_variant_t *hv, ts_es_t *te,
     int outlen;
     int rlen;
 
-    rlen = av_parser_parse2(mc->parser_ctx, mc->fmt_ctx, &outbuf, &outlen,
+    rlen = av_parser_parse2(mc->parser_ctx, mc->ctx, &outbuf, &outlen,
                             data, size, te->te_pts, te->te_dts,
                             te->te_current_seq);
 

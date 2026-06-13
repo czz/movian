@@ -18,6 +18,7 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 #include "media.h"
+#include <libavcodec/codec.h>
 
 static LIST_HEAD(, codec_def) registeredcodecs;
 
@@ -39,23 +40,20 @@ media_codec_deref(media_codec_t *cw)
 {
   if(atomic_dec(&cw->refcount))
     return;
-#if ENABLE_LIBAV
+#if ENABLE_FFMPEG
   if(cw->ctx != NULL && cw->ctx->codec != NULL)
-    avcodec_close(cw->ctx);
+    avcodec_free_context(&cw->ctx);
+  else if(cw->ctx != NULL)
+    free(cw->ctx);  // Only free if avcodec_free_context wasn't called
 
-  if(cw->fmt_ctx != NULL && cw->fmt_ctx->codec != NULL)
-    avcodec_close(cw->fmt_ctx);
+  if(cw->codec_par != NULL && cw->fw == NULL)
+    avcodec_parameters_free(&cw->codec_par);
 #endif
 
   if(cw->close != NULL)
     cw->close(cw);
 
-  free(cw->ctx);
-
-  if(cw->fmt_ctx && cw->fw == NULL)
-    free(cw->fmt_ctx);
-
-#if ENABLE_LIBAV
+#if ENABLE_FFMPEG
   if(cw->parser_ctx != NULL)
     av_parser_close(cw->parser_ctx);
 
@@ -72,20 +70,20 @@ media_codec_deref(media_codec_t *cw)
  */
 media_codec_t *
 media_codec_create(int codec_id, int parser,
-		   struct media_format *fw, struct AVCodecContext *ctx,
+		   struct media_format *fw, struct AVCodecParameters *par,
 		   const media_codec_params_t *mcp, media_pipe_t *mp)
 {
   media_codec_t *mc = calloc(1, sizeof(media_codec_t));
   codec_def_t *cd;
 
   mc->mp = mp;
-  mc->fmt_ctx = ctx;
+  mc->codec_par = par;
   mc->codec_id = codec_id;
 
-#if ENABLE_LIBAV
-  if(ctx != NULL && mcp != NULL) {
-    assert(ctx->extradata      == mcp->extradata);
-    assert(ctx->extradata_size == mcp->extradata_size);
+#if ENABLE_FFMPEG
+  if(par != NULL && mcp != NULL) {
+    assert(par->extradata      == mcp->extradata);
+    assert(par->extradata_size == mcp->extradata_size);
   }
 #endif
 
@@ -103,13 +101,11 @@ media_codec_create(int codec_id, int parser,
     return NULL;
   }
 
-#if ENABLE_LIBAV
+#if ENABLE_FFMPEG
   if(parser) {
     assert(fw == NULL);
 
-    const AVCodec *codec = avcodec_find_decoder(codec_id);
-    assert(codec != NULL);
-    mc->fmt_ctx = avcodec_alloc_context3(codec);
+    mc->codec_par = avcodec_parameters_alloc();
     mc->parser_ctx = av_parser_init(codec_id);
   }
 #endif
@@ -136,6 +132,11 @@ media_codec_init(void)
   LIST_FOREACH(cd, &registeredcodecs, link)
     if(cd->init)
       cd->init();
+
+  // Debug: check if decoders can be found
+  const AVCodec *h264 = avcodec_find_decoder(AV_CODEC_ID_H264);
+  const AVCodec *vorbis = avcodec_find_decoder(AV_CODEC_ID_VORBIS);
+  TRACE(TRACE_INFO, "media", "FFmpeg decoders check: h264=%p, vorbis=%p", h264, vorbis);
 }
 
 

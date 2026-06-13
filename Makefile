@@ -41,11 +41,6 @@ include ${BUILDDIR}/config.mak
 CFLAGS_std += -Wall -Werror -Wwrite-strings -Wno-deprecated-declarations \
 		-Wmissing-prototypes -Wno-multichar -Iext/dvd -std=gnu99
 
-# Add deko3d include path when backend is enabled
-ifeq ($(CONFIG_GLW_BACKEND_DEKO3D),yes)
-CFLAGS_std += -I${DEVKITPRO}/libnx/include
-endif
-
 # Only add GCC-specific warnings when actually using GCC
 ifneq ($(findstring clang,$(CC)),clang)
 GCCVERSIONGTEQ8 := $(shell expr `gcc -dumpversion | cut -f1 -d.` \>= 8)
@@ -143,12 +138,11 @@ SRCS +=	src/image/image.c \
 	src/image/pixmap.c \
 	src/image/nanosvg.c \
 	src/image/svg.c \
+	src/image/rasterizer_ft.c \
 	src/image/jpeg.c \
 	src/image/vector.c \
 	src/image/image_decoder_ffmpeg.c \
 	src/image/dominantcolor.c \
-
-SRCS-${CONFIG_LIBFREETYPE} += src/image/rasterizer_ft.c
 
 SRCS-${CONFIG_LIBJPEG} += src/image/libjpeg.c
 
@@ -459,11 +453,13 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_texture_loader.c \
 			src/ui/glw/glw_image.c \
 			src/ui/glw/glw_text_bitmap.c \
+			src/ui/glw/glw_bloom.c \
 			src/ui/glw/glw_cube.c \
 			src/ui/glw/glw_displacement.c \
 			src/ui/glw/glw_coverflow.c \
 			src/ui/glw/glw_mirror.c \
 			src/ui/glw/glw_video_common.c \
+			src/ui/glw/glw_video_overlay.c \
 			src/ui/glw/glw_bar.c \
 			src/ui/glw/glw_flicker.c \
 			src/ui/glw/glw_keyintercept.c \
@@ -493,24 +489,7 @@ SRCS-$(CONFIG_GLW_REC)            += src/ui/glw/glw_rec.c
 SRCS-$(CONFIG_GLW_FRONTEND_PS3)   += src/ui/glw/glw_ps3.c
 SRCS-$(CONFIG_GLW_BACKEND_RSX)    += src/ui/glw/glw_rsx.c
 SRCS-$(CONFIG_GLW_BACKEND_RSX)    += src/ui/glw/glw_texture_rsx.c
-
-# glw_switch.c needs special handling for Switch builds
-ifeq ($(CONFIG_GLW_FRONTEND_SWITCH),y)
-SRCS += src/ui/glw/glw_switch.c
-endif
 SRCS-$(CONFIG_GLW_BACKEND_RSX)    += src/ui/glw/glw_video_rsx.c
-
-SRCS-$(CONFIG_GLW_BACKEND_DEKO3D) += src/ui/glw/glw_deko3d.c
-SRCS-$(CONFIG_GLW_BACKEND_DEKO3D) += src/ui/glw/glw_texture_deko3d.c
-
-# glw_bloom.c and glw_video_overlay.c require GPU-specific functions (RTT, etc.)
-# Add them for OpenGL/RSX backends, exclude for Switch SW/Deko3d backends
-ifeq ($(CONFIG_GLW_BACKEND_SW),)
-ifeq ($(CONFIG_GLW_BACKEND_DEKO3D),)
-SRCS-yes += src/ui/glw/glw_bloom.c
-SRCS-yes += src/ui/glw/glw_video_overlay.c
-endif
-endif
 
 SRCS-$(CONFIG_GLW_FRONTEND_WII)	  += src/ui/glw/glw_wii.c
 SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_texture_gx.c
@@ -624,7 +603,7 @@ MBEDTLS_SRCS := $(wildcard $(MBEDTLS_DIR)/library/*.c)
 
 SRCS-$(CONFIG_MBEDTLS) += $(MBEDTLS_SRCS)
 
-${BUILDDIR}/$(MBEDTLS_DIR)/library/%.o : CFLAGS = -Wall ${OPTFLAGS} -DMBEDTLS_NO_PLATFORM_ENTROPY
+${BUILDDIR}/$(MBEDTLS_DIR)/library/%.o : CFLAGS = -Wall ${OPTFLAGS}
 
 ifeq ($(CONFIG_MBEDTLS), yes)
 CFLAGS_com += -I$(MBEDTLS_DIR)/include
@@ -775,7 +754,6 @@ include src/arch/${PLATFORM}/${PLATFORM}.mk
 SRCS  += $(SRCS-yes)
 DLIBS += $(DLIBS-yes)
 SLIBS += $(SLIBS-yes)
-
 SSRCS  = $(sort $(SRCS))
 OBJS4=   $(SSRCS:%.cpp=$(BUILDDIR)/%.o)
 OBJS3=   $(OBJS4:%.S=$(BUILDDIR)/%.o)

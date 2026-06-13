@@ -17,9 +17,9 @@ CONFIGURE_POSTFIX="nacl"
 
 source support/configure.inc
 
-LIBAV_CFLAGS=""
+FFMPEG_CFLAGS=""
 
-LIBAV_ARCH_FLAGS=""
+FFMPEG_ARCH_FLAGS=""
 
 show_help(){
   common_help
@@ -32,7 +32,7 @@ enable libfreetype
 enable trex
 enable emu_thread_specifics
 enable glw
-enable polarssl
+enable mbedtls
 enable httpserver
 enable sqlite_vfs
 enable sqlite_locking
@@ -85,14 +85,14 @@ CXX=${TOOLCHAIN}clang++
 
 setup_env "$@"
 
-LIBAV_CFLAGS="-I${EXT_INSTALL_DIR}/include"
-LIBAV_LDFLAGS="-L${EXT_INSTALL_DIR}/lib"
-LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=i686 --target-os=linux --disable-asm --disable-inline-asm --disable-programs --disable-ssse3 --disable-mmx --disable-mmxext --disable-amd3dnow --disable-amd3dnowext"
+FFMPEG_CFLAGS="-I${EXT_INSTALL_DIR}/include"
+FFMPEG_LDFLAGS="-L${EXT_INSTALL_DIR}/lib"
+FFMPEG_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=i686 --target-os=linux --disable-asm --disable-inline-asm --disable-programs --disable-ssse3 --disable-mmx --disable-mmxext --disable-amd3dnow --disable-amd3dnowext"
 
 zlib_setup
 bzip2_setup
 freetype_setup --host=i686-none-nacl
-libav_setup
+ext_setup
 bzip2_setup
 
 if enabled release; then

@@ -128,7 +128,7 @@ fbm_release(fbm_t *fbm)
 {
   int i;
 
-  if(atomic_add(&fbm->refcount, -1) > 1)
+  if(atomic_add_and_fetch(&fbm->refcount, -1) > 1)
     return;
   hts_mutex_lock(&sunxi.gfxmem_mutex);
 
@@ -270,7 +270,6 @@ cedar_decode(struct media_codec *mc, struct video_decoder *vd,
     memset(&fi, 0, sizeof(fi));
     fi.fi_pts         = mb->mb_pts;
     fi.fi_epoch       = mb->mb_epoch;
-    fi.fi_delta       = mb->mb_delta;
     fi.fi_duration    = mb->mb_duration > 10000 ?
       mb->mb_duration : cd->cd_estimated_duration;
 
@@ -294,7 +293,7 @@ cedar_decode(struct media_codec *mc, struct video_decoder *vd,
       fi.fi_data[2] = pic->pic.v;
       fi.fi_data[3] = (void *)pic;
       
-      atomic_add(&fbm->refcount, 1);
+      int __attribute__((unused)) rc = atomic_add_and_fetch(&fbm->refcount, 1);
       TAILQ_INSERT_HEAD(&fbm->fbm_display, pic, link);
 
       hts_mutex_unlock(&fbm->fbm_mutex);
@@ -314,9 +313,9 @@ static void
 cedar_close(struct media_codec *mc)
 {
   cedar_decoder_t *cd = mc->opaque;
+  printf("%s: Close\n", cd->cd_name);
   libve_close(1, cd->cd_ve);
   free(cd);
-  printf("%s: Close\n", cd->cd_name);
 #ifdef CEDAR_SESSION_LOCK
   hts_mutex_unlock(&cedar_mutex);
 #endif
@@ -331,7 +330,7 @@ cedar_close(struct media_codec *mc)
  *
  */
 static int
-cedar_codec_open(media_codec_t *mc, const const media_codec_params_t *mcp,
+cedar_codec_open(media_codec_t *mc, const media_codec_params_t *mcp,
 		 media_pipe_t *mp)
 {
   vconfig_t cfg = {0};

@@ -210,14 +210,19 @@ dvd_video_push(dvd_player_t *dp)
   if(cw == NULL)
     return;
 
-  const AVCodecContext *ctx = cw->fmt_ctx;
+  const AVCodecContext *ctx = cw->ctx;
 
   mb = media_buf_alloc_unlocked(mp, 0);
   mb->mb_cw = media_codec_ref(cw);
   mb->mb_aspect_override = dp->dp_aspect_override;
   mb->mb_disable_deinterlacer = 1;
   mb->mb_data_type = MB_VIDEO;
-  mb->mb_duration = ctx->ticks_per_frame * 1000000LL * av_q2d(ctx->time_base);
+  // ticks_per_frame was removed in FFmpeg 5.0+, use frame rate instead
+  if(ctx->framerate.num > 0 && ctx->framerate.den > 0) {
+    mb->mb_duration = 1000000LL / av_q2d(ctx->framerate);
+  } else {
+    mb->mb_duration = 1000000LL * av_q2d(ctx->time_base);
+  }
   mb->mb_pts = AV_NOPTS_VALUE;
   mb->mb_dts = AV_NOPTS_VALUE;
 
@@ -274,7 +279,7 @@ dvd_media_enqueue(dvd_player_t *dp, media_queue_t *mq, media_codec_t *cw,
 {
   media_buf_t *mb = media_buf_alloc_unlocked(dp->dp_mp, datalen);
 
-  const AVCodecContext *ctx = cw->fmt_ctx;
+  const AVCodecContext *ctx = cw->ctx;
 
   mb->mb_cw = media_codec_ref(cw);
   mb->mb_data_type = data_type;
@@ -480,7 +485,7 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
       return NULL;
   }
 
-  ctx = cw->fmt_ctx;
+  ctx = cw->ctx;
  
   if(cw->parser_ctx == NULL) /* No parser available */
     return dvd_media_enqueue(dp, mq, cw, data_type, buf, len, dts, pts);

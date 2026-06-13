@@ -262,7 +262,7 @@ ui_run(void)
     glw_prepare_frame(gr, 0);
 
     glw_rctx_t rc;
-    glw_rctx_init(&rc, gr->gr_width, gr->gr_height, 1);
+    glw_rctx_init(&rc, gr->gr_width, gr->gr_height, 1, 0);
     glw_layout0(gr->gr_universe, &rc);
     glw_render0(gr->gr_universe, &rc);
 
@@ -349,7 +349,7 @@ main(int argc, char **argv)
 
   main_init();
 
-  trap_init();
+  linux_trap_init();
 
   sunxi_init();
 

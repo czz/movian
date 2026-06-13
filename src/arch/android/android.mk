@@ -43,12 +43,12 @@ ${BUILDDIR}/apk/lib/${ANDROID_ABI}/libcore.so: ${LIB}.so
 	@mkdir -p $(dir $@)
 	${STRIP} -o $@ $<
 
-${BUILDDIR}/inst/lib/libavcodec.so:    $(BUILDDIR)/stamps/libav.stamp
-${BUILDDIR}/inst/lib/libavdevice.so:   $(BUILDDIR)/stamps/libav.stamp
-${BUILDDIR}/inst/lib/libavformat.so:   $(BUILDDIR)/stamps/libav.stamp
-${BUILDDIR}/inst/lib/libavresample.so: $(BUILDDIR)/stamps/libav.stamp
-${BUILDDIR}/inst/lib/libavutil.so:     $(BUILDDIR)/stamps/libav.stamp
-${BUILDDIR}/inst/lib/libswscale.so:    $(BUILDDIR)/stamps/libav.stamp
+${BUILDDIR}/inst/lib/libavcodec.so:    $(BUILDDIR)/stamps/ffmpeg.stamp
+${BUILDDIR}/inst/lib/libavdevice.so:   $(BUILDDIR)/stamps/ffmpeg.stamp
+${BUILDDIR}/inst/lib/libavformat.so:   $(BUILDDIR)/stamps/ffmpeg.stamp
+${BUILDDIR}/inst/lib/libswresample.so: $(BUILDDIR)/stamps/ffmpeg.stamp
+${BUILDDIR}/inst/lib/libavutil.so:     $(BUILDDIR)/stamps/ffmpeg.stamp
+${BUILDDIR}/inst/lib/libswscale.so:    $(BUILDDIR)/stamps/ffmpeg.stamp
 
 ${BUILDDIR}/apk/lib/${ANDROID_ABI}/%.so: ${BUILDDIR}/inst/lib/%.so
 	@mkdir -p $(dir $@)
@@ -65,7 +65,7 @@ ${R_JAVA}: ${MANIFEST} ${RESFILES}
 ${BUILDDIR}/apk/classes.dex: ${JAVA_SRCS} ${R_JAVA}
 	@mkdir -p ${BUILDDIR}/classes
 	@mkdir -p $(dir $@)
-	javac -source 1.7 -target 1.7 \
+	javac -source 1.8 -target 1.8 \
 	-bootclasspath "${JAVA_HOME}/jre/lib/rt.jar" \
 	-classpath ${ANDROID_PLATFORM_PATH}/android.jar -d ${BUILDDIR}/classes \
 	${R_JAVA} ${JAVA_SRCS}
@@ -76,7 +76,7 @@ ${BUILDDIR}/${APPNAME}.unsigned.apk: ${BUILDDIR}/apk/classes.dex ${RESFILES} \
 	${BUILDDIR}/apk/lib/${ANDROID_ABI}/libavcodec.so \
 	${BUILDDIR}/apk/lib/${ANDROID_ABI}/libavdevice.so \
 	${BUILDDIR}/apk/lib/${ANDROID_ABI}/libavformat.so \
-	${BUILDDIR}/apk/lib/${ANDROID_ABI}/libavresample.so \
+	${BUILDDIR}/apk/lib/${ANDROID_ABI}/libswresample.so \
 	${BUILDDIR}/apk/lib/${ANDROID_ABI}/libavutil.so \
 	${BUILDDIR}/apk/lib/${ANDROID_ABI}/libswscale.so
 	${AAPT} package -f -M ${MANIFEST} -S android/res \

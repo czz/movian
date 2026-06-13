@@ -608,9 +608,7 @@ cedar2_deliver(const frame_info_t *fi, glw_video_t *gv)
   gvs->gvs_data[1] = fi->fi_data[1];
   gvs->gvs_data[2] = fi->fi_data[2];
 
-  gvs->gvs_opaque  = fi->fi_refop;
-
-  fi->fi_refop(gvs->gvs_data[2], 1);
+  gvs->gvs_opaque  = NULL;
 
   glw_video_put_surface(gv, gvs, fi->fi_pts, fi->fi_epoch,
 			fi->fi_duration, 0, 0);

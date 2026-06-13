@@ -23,7 +23,7 @@ BuildRequires:	mesa-libGLU-devel
 BuildRequires:	librtmp-devel
 BuildRequires:	libdvdread-devel
 BuildRequires:	libdvdnav-devel
-BuildRequires:	polarssl-devel
+BuildRequires:	mbedtls-devel
 BuildRequires:	freetype-devel
 BuildRequires:	desktop-file-utils
 
@@ -39,7 +39,7 @@ Requires:	mesa-libGLU
 Requires:	librtmp
 Requires:	libdvdread
 Requires:	libdvdnav
-Requires:	polarssl
+Requires:	mbedtls
 Requires:	freetype
 
 Requires(post): desktop-file-utils
@@ -55,7 +55,7 @@ Easy to setup, no configuration files. All configuration is tuned from inside th
 %setup -q
 
 #
-# build now currently depends on the showtime branch of libav git repository (ffmpeg static) ffmpeg newer then in dist repos.
+# build now currently depends on the Movian-pinned FFmpeg submodule to provide consistent static libraries newer than distro packages.
 
 %build
 git checkout release/3.2
@@ -123,7 +123,7 @@ fi
 - Showtime 3.2.3
 
 * Wed Aug 17 2011 Jonas Karlsson <Jonas Karlsson at fxdev dot com> 3.1.173
-- First rpm on the 3.x branch, compiling against showtime git branch of libav 0.7
+- First rpm on the 3.x branch, compiling against showtime git branch of ffmpeg 0.7
 
 * Thu Dec 30 2010 Jonas Karlsson <Jonas Karlsson at fxdev dot com> svn5784
 - First RPM (Fedora 14) release

@@ -19,7 +19,21 @@
  */
 #pragma once
 #include <libavutil/samplefmt.h>
-#include <libavresample/avresample.h>
+#include <libswresample/swresample.h>
+
+#define AVAudioResampleContext SwrContext
+
+#define avresample_alloc_context() swr_alloc()
+#define avresample_free(x) swr_free(x)
+#define avresample_close(x) swr_free(x)
+#define avresample_open(x) swr_init(x)
+#define avresample_convert(a, b, c, d, e, f, g) swr_convert(a, g, d, b, c)
+#define avresample_available(x) swr_get_out_samples(x, 0)
+#define avresample_get_delay(x) swr_get_delay(x, 1000000)
+
+static inline int avresample_read(AVAudioResampleContext *avr, uint8_t **output, int nb_samples) {
+    return swr_convert(avr, output, nb_samples, NULL, 0);
+}
 
 #include "arch/threads.h"
 #include "media/media.h"

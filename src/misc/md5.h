@@ -32,7 +32,7 @@
 
 #define md5_final(ctx, output) CC_MD5_Final(output, &ctx)
 
-#elif ENABLE_LIBAV
+#elif ENABLE_FFMPEG
 
 #include <libavutil/md5.h>
 #include <libavutil/mem.h>
@@ -50,15 +50,40 @@
   av_md5_final(ctx, output);                    \
   av_freep(&ctx);                               \
   } while(0)
-#elif ENABLE_POLARSSL
 
-#include "polarssl/md5.h"
+#elif ENABLE_MBEDTLS
 
-#define md5_decl(ctx) md5_context *ctx = alloca(sizeof(md5_context));
+#include <mbedtls/md5.h>
 
-#define md5_init(ctx) md5_starts(ctx);
+/* stato MD5 */
+#define md5_decl(ctx) mbedtls_md5_context ctx
 
-#define md5_final(ctx, output) md5_finish(ctx, output);
+#define md5_init(ctx) \
+    do { \
+        mbedtls_md5_init(&ctx); \
+        mbedtls_md5_starts_ret(&ctx); \
+    } while(0)
+
+#define md5_update(ctx, data, len) \
+    mbedtls_md5_update_ret(&ctx, data, len)
+
+#define md5_final(ctx, output) \
+    do { \
+        mbedtls_md5_finish_ret(&ctx, output); \
+        mbedtls_md5_free(&ctx); \
+    } while(0)
+
+#elif ENABLE_OPENSSL
+
+#include <openssl/md5.h>
+
+#define md5_decl(ctx) MD5_CTX ctx
+
+#define md5_init(ctx) MD5_Init(&ctx)
+
+#define md5_update(ctx, data, len) MD5_Update(&ctx, data, len)
+
+#define md5_final(ctx, output) MD5_Final(output, &ctx)
 
 #else
 

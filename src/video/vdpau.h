@@ -129,6 +129,6 @@ void vdpau_mixer_set_color_matrix(vdpau_mixer_t *vm,
 				  const struct frame_info *fi);
 
 
-int vdpau_init_libav_decode(media_codec_t *mc, AVCodecContext *ctx);
+int vdpau_init_ffmpeg_decode(media_codec_t *mc, AVCodecContext *ctx);
 
 #endif // VDPAU_H__

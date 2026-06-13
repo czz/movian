@@ -121,7 +121,7 @@ screenshot_response(const char *url, const char *errmsg)
 static buf_t *
 screenshot_compress(pixmap_t *pm, int codecid)
 {
-  AVCodec *codec = avcodec_find_encoder(codecid);
+  const AVCodec *codec = avcodec_find_encoder(codecid);
   if(codec == NULL)
     return NULL;
 
@@ -143,8 +143,10 @@ screenshot_compress(pixmap_t *pm, int codecid)
   }
 
   AVFrame *oframe = av_frame_alloc();
-
-  avpicture_alloc((AVPicture *)oframe, ctx->pix_fmt, width, height);
+  oframe->format = ctx->pix_fmt;
+  oframe->width  = width;
+  oframe->height = height;
+  av_frame_get_buffer(oframe, 0);
 
   const uint8_t *ptr[4] = {};
   int strides[4] = {0};
@@ -167,19 +169,21 @@ screenshot_compress(pixmap_t *pm, int codecid)
 
   oframe->pts = AV_NOPTS_VALUE;
   AVPacket out;
-  memset(&out, 0, sizeof(AVPacket));
-  int got_packet;
-  int r = avcodec_encode_video2(ctx, &out, oframe, &got_packet);
+  av_init_packet(&out);
+  int r = avcodec_send_frame(ctx, oframe);
   buf_t *b;
-  if(r >= 0 && got_packet) {
-    b = buf_create_and_adopt(out.size, out.data, &av_free);
+  if(r >= 0) {
+    r = avcodec_receive_packet(ctx, &out);
+    if(r >= 0) {
+      b = buf_create_and_adopt(out.size, out.data, &av_free);
+    } else {
+      b = NULL;
+    }
   } else {
-    assert(out.data == NULL);
     b = NULL;
   }
   av_frame_free(&oframe);
-  avcodec_close(ctx);
-  av_free(ctx);
+  avcodec_free_context(&ctx);
   return b;
 }
 

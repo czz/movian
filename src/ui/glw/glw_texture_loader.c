@@ -342,8 +342,10 @@ loader_thread(void *aux)
 	if(img != NULL && img != NOT_MODIFIED)
 	  image_release(img);
 
-        if(gconf.enable_image_debug)
-          TRACE(TRACE_DEBUG, "GLW", "Load of %s was aborted", rstr_get(url));
+        if(gconf.enable_image_debug) {
+          const char *url_str = rstr_get(url);
+          TRACE(TRACE_DEBUG, "GLW", "Load of %s was aborted", url_str ? url_str : "<null>");
+        }
 
         glt_set_state(glt, GLT_STATE_INACTIVE);
       } else if(img == NULL) {

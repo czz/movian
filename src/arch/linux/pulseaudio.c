@@ -424,6 +424,9 @@ pulseaudio_audio_deliver(audio_decoder_t *ad, int samples,
 			 int64_t pts, int epoch)
 {
   decoder_t *d = (decoder_t *)ad;
+  media_pipe_t *mp = ad->ad_mp;
+  if(mp == NULL)
+    return -1;
   size_t bytes;
 
   if(ad->ad_spdif_muxer != NULL) {
@@ -454,7 +457,8 @@ pulseaudio_audio_deliver(audio_decoder_t *ad, int samples,
     uint8_t *data[8] = {0};
     data[0] = (uint8_t *)buf;
     assert(rsamples <= samples);
-    avresample_read(ad->ad_avr, data, rsamples);
+    if(ad->ad_avr != NULL)
+      avresample_read(ad->ad_avr, data, rsamples);
 
     float *x = (float *)buf;
     int i = 0;

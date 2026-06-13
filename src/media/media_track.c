@@ -714,6 +714,8 @@ mp_track_mgr_select_track(media_track_mgr_t *mtm, event_select_track_t *est)
   int rval = 0;
   const char *id = est->id;
   media_pipe_t *mp = mtm->mtm_mp;
+  if(mp == NULL)
+    return 0;
 
   if(is_audio) {
 
@@ -724,9 +726,9 @@ mp_track_mgr_select_track(media_track_mgr_t *mtm, event_select_track_t *est)
 
       mp->mp_audio.mq_stream = -1;
 
-    } else if(!strncmp(id, "libav:", strlen("libav:"))) {
+    } else if(!strncmp(id, "ffmpeg:", strlen("ffmpeg:"))) {
 
-      mp->mp_audio.mq_stream =  atoi(id + strlen("libav:"));
+      mp->mp_audio.mq_stream =  atoi(id + strlen("ffmpeg:"));
       rval = 1;
     }
 
@@ -749,9 +751,9 @@ mp_track_mgr_select_track(media_track_mgr_t *mtm, event_select_track_t *est)
 
     if(mystrbegins(id, "sub:")) {
 
-    } else if(!strncmp(id, "libav:", strlen("libav:"))) {
+    } else if(!strncmp(id, "ffmpeg:", strlen("ffmpeg:"))) {
 
-      mp->mp_video.mq_stream2 = atoi(id + strlen("libav:"));
+      mp->mp_video.mq_stream2 = atoi(id + strlen("ffmpeg:"));
       rval = 1;
 
     } else {

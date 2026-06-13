@@ -35,12 +35,12 @@
 #include "image/jpeg.h"
 #include "htsmsg/htsmsg_json.h"
 
-#if ENABLE_LIBAV
+#if ENABLE_FFMPEG
 #include <libavutil/avstring.h>
 #include <libavformat/avio.h>
 #include <libavformat/avformat.h>
-#include "fa_libav.h"
-#include "libav.h"
+#include "fa_ffmpeg.h"
+#include "ffmpeg.h"
 #endif
 
 #if ENABLE_VMIR
@@ -57,7 +57,7 @@
 static const char *
 codecname(enum AVCodecID id)
 {
-  AVCodec *c;
+  const AVCodec *c;
 
   switch(id) {
   case AV_CODEC_ID_AC3:
@@ -97,7 +97,7 @@ static const uint8_t offsig[8] ={0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1}
  *
  */
 static rstr_t *
-libav_metadata_rstr(AVDictionary *m, const char *key)
+ffmpeg_metadata_rstr(AVDictionary *m, const char *key)
 {
   AVDictionaryEntry *tag;
   int len;
@@ -138,7 +138,7 @@ libav_metadata_rstr(AVDictionary *m, const char *key)
  *
  */
 static int
-libav_metadata_int(AVDictionary *m, const char *key, int def)
+ffmpeg_metadata_int(AVDictionary *m, const char *key, int def)
 {
   AVDictionaryEntry *tag;
 
@@ -423,6 +423,7 @@ fa_probe_iso(metadata_t *md, fa_handle_t *fh)
   return fa_probe_iso0(md, pb);
 }
 
+#if ENABLE_FFMPEG
 /**
  *
  */
@@ -435,10 +436,10 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx,
   int has_video = 0;
   int has_audio = 0;
 
-  md->md_artist = libav_metadata_rstr(fctx->metadata, "artist") ?:
-    libav_metadata_rstr(fctx->metadata, "author");
+  md->md_artist = ffmpeg_metadata_rstr(fctx->metadata, "artist") ?:
+    ffmpeg_metadata_rstr(fctx->metadata, "author");
 
-  md->md_album = libav_metadata_rstr(fctx->metadata, "album");
+  md->md_album = ffmpeg_metadata_rstr(fctx->metadata, "album");
 
   md->md_format = rstr_alloc(fctx->iformat->long_name);
 
@@ -447,12 +448,12 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx,
 
   for(i = 0; i < fctx->nb_streams; i++) {
     AVStream *stream = fctx->streams[i];
-    AVCodecContext *avctx = stream->codec;
+    AVCodecParameters *avpar = stream->codecpar;
 
-    if(avctx->codec_type == AVMEDIA_TYPE_AUDIO)
+    if(avpar->codec_type == AVMEDIA_TYPE_AUDIO)
       has_audio = 1;
 
-    if(avctx->codec_type == AVMEDIA_TYPE_VIDEO &&
+    if(avpar->codec_type == AVMEDIA_TYPE_VIDEO &&
        !(stream->disposition & AV_DISPOSITION_ATTACHED_PIC))
       has_video = 1;
   }
@@ -460,8 +461,8 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx,
   if(has_audio && !has_video) {
     md->md_contenttype = CONTENT_AUDIO;
 
-    md->md_title = libav_metadata_rstr(fctx->metadata, "title");
-    md->md_track = libav_metadata_int(fctx->metadata, "track",
+    md->md_title = ffmpeg_metadata_rstr(fctx->metadata, "title");
+    md->md_track = ffmpeg_metadata_int(fctx->metadata, "track",
                                       filename ? atoi(filename) : 0);
 
     return;
@@ -480,16 +481,23 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx,
 
     for(i = 0; i < fctx->nb_streams; i++) {
       AVStream *stream = fctx->streams[i];
-      AVCodecContext *avctx = stream->codec;
-      AVCodec *codec = avcodec_find_decoder(avctx->codec_id);
+      AVCodecParameters *avpar = stream->codecpar;
+      const AVCodec *codec = avcodec_find_decoder(avpar->codec_id);
       AVDictionaryEntry *lang, *title;
       int tn;
       char str[256];
 
-      avcodec_string(str, sizeof(str), avctx, 0);
+      AVCodecContext *avctx = avcodec_alloc_context3(codec);
+      if(avctx != NULL) {
+        avcodec_parameters_to_context(avctx, avpar);
+        avcodec_string(str, sizeof(str), avctx, 0);
+        avcodec_free_context(&avctx);
+      } else {
+        snprintf(str, sizeof(str), "Unknown codec");
+      }
       TRACE(TRACE_DEBUG, "Probe", " Stream #%d: %s", i, str);
 
-      switch(avctx->codec_type) {
+      switch(avpar->codec_type) {
       case AVMEDIA_TYPE_VIDEO:
 	has_video = !!codec;
 	tn = ++vtrack;
@@ -507,9 +515,9 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx,
       }
 
       if(codec == NULL) {
-	snprintf(tmp1, sizeof(tmp1), "%s", codecname(avctx->codec_id));
+	snprintf(tmp1, sizeof(tmp1), "%s", codecname(avpar->codec_id));
       } else {
-	metadata_from_libav(tmp1, sizeof(tmp1), codec, avctx);
+	metadata_from_ffmpeg(tmp1, sizeof(tmp1), codec, avpar);
       }
 
       lang = av_dict_get(stream->metadata, "language", NULL,
@@ -518,13 +526,13 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx,
       title = av_dict_get(stream->metadata, "title", NULL,
                           AV_DICT_IGNORE_SUFFIX);
 
-      metadata_add_stream(md, codecname(avctx->codec_id),
-			  avctx->codec_type, i,
+      metadata_add_stream(md, codecname(avpar->codec_id),
+			  avpar->codec_type, i,
 			  title ? title->value : NULL,
 			  tmp1,
 			  lang ? lang->value : NULL,
 			  stream->disposition,
-			  tn, avctx->channels);
+			  tn, avpar->ch_layout.nb_channels);
     }
 
     md->md_contenttype = CONTENT_FILE;
@@ -535,6 +543,7 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx,
     }
   }
 }
+#endif
 
 
 /**
@@ -556,7 +565,9 @@ fa_probe_metadata(const char *url, char *errbuf, size_t errsize,
   }
 
 
+#if ENABLE_FFMPEG
   AVFormatContext *fctx;
+#endif
   int park = 1;
   fa_open_extra_t foe = {
     .foe_stats = stats
@@ -597,26 +608,31 @@ fa_probe_metadata(const char *url, char *errbuf, size_t errsize,
     return md;
   }
 
-  int strategy = fa_libav_get_strategy_for_file(fh);
+#if ENABLE_FFMPEG
+  int strategy = fa_ffmpeg_get_strategy_for_file(fh);
 
-  AVIOContext *avio = fa_libav_reopen(fh, 0);
+  AVIOContext *avio = fa_ffmpeg_reopen(fh, 0, NULL);
 
-  if((fctx = fa_libav_open_format(avio, url, errbuf, errsize,
+  if((fctx = fa_ffmpeg_open_format(avio, url, errbuf, errsize,
                                   NULL, strategy)) == NULL) {
-    fa_libav_close(avio);
+    fa_ffmpeg_close(avio);
     metadata_destroy(md);
     return NULL;
   }
 
   fa_lavf_load_meta(md, fctx, filename);
-  fa_libav_close_format(fctx, park);
+  fa_ffmpeg_close_format(fctx, park);
   return md;
+#else
+  return NULL;
+#endif
 }
 
 
 /**
  *
  */
+#if ENABLE_FFMPEG
 metadata_t *
 fa_metadata_from_fctx(AVFormatContext *fctx)
 {
@@ -625,6 +641,7 @@ fa_metadata_from_fctx(AVFormatContext *fctx)
   fa_lavf_load_meta(md, fctx, NULL);
   return md;
 }
+#endif
 
 
 /**

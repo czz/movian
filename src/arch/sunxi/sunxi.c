@@ -26,7 +26,7 @@
 #include "main.h"
 #include "sunxi.h"
 #include "backend/backend.h"
-#include "misc/pixmap.h"
+#include "image/pixmap.h"
 #include "misc/rstr.h"
 
 static void sunxi_set_bg(const char *path);
@@ -127,7 +127,7 @@ sunxi_init(void)
 
   sunxi.ve_version = ve_read(VE_VERSION) >> 16;
 
-  TRACE(TRACE_INFO, "CEDAR", "Version 0x%04x opened. PA: %x VA: %p",
+  TRACE(TRACE_INFO, "CEDAR", "Version 0x%04x opened. PA: %x VA: %x",
 	sunxi.ve_version, sunxi.env_info.phymem_start, sunxi.gfxmembase);
 
   hts_mutex_init(&sunxi.gfxmem_mutex);
@@ -192,6 +192,7 @@ sunxi_set_bg(const char *path)
   char errbuf[128];
   image_meta_t im = {0};
   unsigned long args[4] = {0};
+  image_t *img;
   pixmap_t *pm;
   int width = 1280, height = 720;
   int r;
@@ -204,14 +205,22 @@ sunxi_set_bg(const char *path)
 
   rstr_t *rpath = rstr_alloc(path);
 
-  pm = backend_imageloader(rpath, &im, NULL, errbuf, sizeof(errbuf),
+  img = backend_imageloader(rpath, &im, errbuf, sizeof(errbuf),
 			   NULL, NULL, NULL);
   rstr_release(rpath);
 
-  if(pm == NULL) {
+  if(img == NULL) {
     TRACE(TRACE_ERROR, "BG", "Unable to load %s -- %s", path, errbuf);
     return;
   }
+
+  image_component_t *ic = image_find_component(img, IMAGE_PIXMAP);
+  if(ic == NULL) {
+    TRACE(TRACE_ERROR, "BG", "No pixmap in image %s", path);
+    image_release(img);
+    return;
+  }
+  pm = ic->pm;
 
   int bpp;
 
@@ -234,9 +243,9 @@ sunxi_set_bg(const char *path)
   hts_mutex_lock(&sunxi.gfxmem_mutex);
   uint8_t *dst = tlsf_memalign(sunxi.gfxmem, 1024, tsize);
   hts_mutex_unlock(&sunxi.gfxmem_mutex);
-  memcpy(dst, pm->pm_pixels, tsize);
+  memcpy(dst, pm->pm_data, tsize);
 
-  pixmap_release(pm);
+  image_release(img);
 
   __disp_video_fb_t   frmbuf;
   memset(&frmbuf, 0, sizeof(__disp_video_fb_t));

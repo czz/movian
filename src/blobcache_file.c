@@ -943,7 +943,9 @@ flushthread(void *aux)
 
     assert(TAILQ_FIRST(&flush_queue) == bf);
     TAILQ_REMOVE(&flush_queue, bf, bf_link);
-    buf_release(bf->bf_buf);
+    // Don't release FFmpeg-managed buffers - they are freed by FFmpeg
+    if(bf->bf_buf != NULL && bf->bf_buf->b_free == NULL)
+      buf_release(bf->bf_buf);
     pool_put(item_pool, bf);
 
     uint64_t maxsize = blobcache_compute_maxsize();

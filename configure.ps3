@@ -24,7 +24,7 @@ enable emu_thread_specifics
 enable glw_frontend_ps3
 enable glw_backend_rsx
 enable glw
-enable polarssl
+enable mbedtls
 #enable librtmp
 enable httpserver
 enable dvd
@@ -62,17 +62,17 @@ done
 TOOLCHAIN="${PS3DEV}/host/ppu/bin/ppu-"
 CC=${TOOLCHAIN}gcc
 
-LIBAV_CFLAGS="-mminimal-toc -I${PSL1GHT}/target/include -B${PSL1GHT}/target/lib -B${PS3DEV}/host/ppu/lib -I${PS3DEV}/host/ppu/include -include ${TOPDIR}/support/nostrictansi.h"
+FFMPEG_CFLAGS="-mminimal-toc -I${PSL1GHT}/target/include -B${PSL1GHT}/target/lib -B${PS3DEV}/host/ppu/lib -I${PS3DEV}/host/ppu/include -include ${TOPDIR}/support/nostrictansi.h"
 
-LIBAV_ARCH_FLAGS="--cross-prefix=${PS3DEV}/host/ppu/bin/ppu- --enable-cross-compile --arch=powerpc64 --cpu=cell --target-os=none --malloc-prefix=my --disable-shared --enable-static"
+FFMPEG_ARCH_FLAGS="--cross-prefix=${PS3DEV}/host/ppu/bin/ppu- --enable-cross-compile --arch=powerpc64 --cpu=cell --target-os=none --malloc-prefix=my --disable-shared --enable-static"
 
 
 setup_env "$@"
 
 
-mkdir -p ${BUILDDIR}/libav
-${PS3DEV}/host/ppu/bin/ppu-gcc -c -o ${BUILDDIR}/libav/mallocstub.o ${TOPDIR}/support/mallocstub.c
-LIBAV_LDFLAGS="${BUILDDIR}/libav/mallocstub.o -B${PS3DEV}/host/ppu/lib"
+mkdir -p ${BUILDDIR}/ffmpeg
+${PS3DEV}/host/ppu/bin/ppu-gcc -c -o ${BUILDDIR}/ffmpeg/mallocstub.o ${TOPDIR}/support/mallocstub.c
+FFMPEG_LDFLAGS="${BUILDDIR}/ffmpeg/mallocstub.o -B${PS3DEV}/host/ppu/lib"
 
 bzip2_setup
 ext_setup

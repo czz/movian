@@ -23,8 +23,48 @@
 #include "media/media.h"
 #include "vdpau.h"
 #include "video/video_decoder.h"
-#include "libav.h"
+#include "ffmpeg.h"
 #include <libavutil/mem.h>
+#include <libavcodec/vdpau.h>
+#include <libavutil/hwcontext.h>
+
+/**
+ * Map FFmpeg codec profile to VDPAU profile
+ */
+static int
+vdpau_get_profile(AVCodecContext *ctx, VdpDecoderProfile *vdp_profile)
+{
+  switch(ctx->codec_id) {
+  case AV_CODEC_ID_MPEG1VIDEO:
+    *vdp_profile = VDP_DECODER_PROFILE_MPEG1;
+    return 0;
+  case AV_CODEC_ID_MPEG2VIDEO:
+    *vdp_profile = VDP_DECODER_PROFILE_MPEG2_MAIN;
+    return 0;
+  case AV_CODEC_ID_H264:
+    switch(ctx->profile) {
+    case AV_PROFILE_H264_BASELINE:
+    case AV_PROFILE_H264_CONSTRAINED_BASELINE:
+      *vdp_profile = VDP_DECODER_PROFILE_H264_BASELINE;
+      return 0;
+    case AV_PROFILE_H264_MAIN:
+      *vdp_profile = VDP_DECODER_PROFILE_H264_MAIN;
+      return 0;
+    case AV_PROFILE_H264_HIGH:
+      *vdp_profile = VDP_DECODER_PROFILE_H264_HIGH;
+      return 0;
+    }
+    return -1;
+  case AV_CODEC_ID_VC1:
+    *vdp_profile = VDP_DECODER_PROFILE_VC1_MAIN;
+    return 0;
+  case AV_CODEC_ID_WMV3:
+    *vdp_profile = VDP_DECODER_PROFILE_VC1_MAIN;
+    return 0;
+  default:
+    return -1;
+  }
+}
 
 /**
  *
@@ -328,87 +368,29 @@ vdpau_codec_release(vdpau_codec_t *vc)
  *
  */
 static void
-vdpau_release_buffer(void *opaque, uint8_t *data)
-{
-  VdpVideoSurface surface = (uintptr_t)(void *)data;
-  vdpau_codec_t *vc = opaque;
-
-  hts_mutex_lock(&vc->vc_surface_cache_mutex);
-
-  if(vc->vc_surface_cache_depth < VC_SURFACE_CACHE_SIZE) {
-    vc->vc_surface_cache[vc->vc_surface_cache_depth++] = surface;
-  } else {
-    vc->vc_vd->vdp_video_surface_destroy(surface);
-  }
-
-  hts_mutex_unlock(&vc->vc_surface_cache_mutex);
-
-  vdpau_codec_release(vc);
-}
-
-
-/**
- *
- */
-static int
-vdpau_get_buffer(struct AVCodecContext *ctx, AVFrame *frame, int flags)
-{
-  media_codec_t *mc = ctx->opaque;
-  vdpau_codec_t *vc = mc->opaque;
-  vdpau_dev_t *vd = vc->vc_vd;
-
-  VdpStatus r;
-
-  VdpVideoSurface surface;
-
-  hts_mutex_lock(&vc->vc_surface_cache_mutex);
-
-  if(vc->vc_surface_cache_depth > 0) {
-
-    surface = vc->vc_surface_cache[--vc->vc_surface_cache_depth];
-
-  } else {
-
-    r = vd->vdp_video_surface_create(vd->vd_dev,
-                                     VDP_CHROMA_TYPE_420,
-                                     vc->vc_width, vc->vc_height, &surface);
-
-    if(r != VDP_STATUS_OK) {
-      TRACE(TRACE_INFO, "VDPAU", "Unable to create surface: %s",
-            vdpau_errstr(vd, r));
-      hts_mutex_unlock(&vc->vc_surface_cache_mutex);
-      return -1;
-    }
-  }
-
-  hts_mutex_unlock(&vc->vc_surface_cache_mutex);
-  atomic_inc(&vc->vc_refcount);
-
-  frame->data[3] = frame->data[0] = (void *)(uintptr_t)surface;
-  frame->buf[0] = av_buffer_create(frame->data[0], 0, vdpau_release_buffer,
-                                   vc, 0);
-  return 0;
-}
-
-
-/**
- *
- */
-static void
 vdpau_codec_hw_close(struct media_codec *mc)
 {
   vdpau_codec_t *vc = mc->opaque;
   vdpau_dev_t *vd = vc->vc_vd;
   AVCodecContext *ctx = mc->ctx;
-  AVVDPAUContext *vctx = ctx->hwaccel_context;
+  
+  if(ctx == NULL) {
+    // ctx can be NULL if VDPAU initialization failed
+    // Just clean up the codec structure
+    vdpau_codec_release(vc);
+    mc->opaque = NULL;
+    return;
+  }
+  
+  // FFmpeg 6.0: Clean up hw_device_ctx and hw_frames_ctx
+  if(ctx->hw_frames_ctx)
+    av_buffer_unref(&ctx->hw_frames_ctx);
+  if(ctx->hw_device_ctx)
+    av_buffer_unref(&ctx->hw_device_ctx);
 
   hts_mutex_lock(&vc->vc_surface_cache_mutex);
   vdpau_release_surfaces(vd, vc);
   hts_mutex_unlock(&vc->vc_surface_cache_mutex);
-
-  vd->vdp_decoder_destroy(vctx->decoder);
-
-  av_freep(&ctx->hwaccel_context);
 
   vdpau_codec_release(vc);
 
@@ -420,7 +402,7 @@ vdpau_codec_hw_close(struct media_codec *mc)
  *
  */
 int
-vdpau_init_libav_decode(media_codec_t *mc, AVCodecContext *ctx)
+vdpau_init_ffmpeg_decode(media_codec_t *mc, AVCodecContext *ctx)
 {
   media_pipe_t *mp = mc->mp;
   vdpau_dev_t *vd = mp->mp_vdpau_dev;
@@ -429,36 +411,33 @@ vdpau_init_libav_decode(media_codec_t *mc, AVCodecContext *ctx)
     return 1;  // VDPAU not initialized
 
   VdpDecoderProfile vdp_profile;
-  int refframes = 2;
 
-  if(av_vdpau_get_profile(ctx, &vdp_profile)) {
+  if(vdpau_get_profile(ctx, &vdp_profile)) {
     TRACE(TRACE_DEBUG, "VDPAU", "Can't decode %s profile %d",
           ctx->codec->name, ctx->profile);
     return 1;
   }
 
-  if(ctx->codec_id == AV_CODEC_ID_H264)
-    refframes = 16;
-
   int width  = ctx->width;
   int height = ctx->height;
 
-  VdpStatus r;
-
-  AVVDPAUContext *vctx = av_vdpau_alloc_context();
-  vctx->decoder = VDP_INVALID_HANDLE;
-  vctx->render = vd->vdp_decoder_render;
-
-  r = vd->vdp_decoder_create(vd->vd_dev, vdp_profile, width, height,
-                             refframes, &vctx->decoder);
-  if(r) {
-    TRACE(TRACE_DEBUG, "VDPAU", "Unable to create decoder: %s",
-          vdpau_errstr(vd, r));
-    av_freep(&vctx);
+  // FFmpeg 6.0: Use av_hwdevice_ctx_create with X11 display (simple case)
+  char display_name[32];
+  snprintf(display_name, sizeof(display_name), "%s", DisplayString(vd->vd_dpy));
+  
+  AVBufferRef *hw_device_ref = NULL;
+  int ret = av_hwdevice_ctx_create(&hw_device_ref, AV_HWDEVICE_TYPE_VDPAU, 
+                                     display_name, NULL, 0);
+  if(ret < 0) {
+    char errbuf[128];
+    av_strerror(ret, errbuf, sizeof(errbuf));
+    TRACE(TRACE_DEBUG, "VDPAU", "Unable to create hw device context: %s (%d)", errbuf, ret);
     return 1;
   }
 
-  ctx->hwaccel_context = vctx;
+  // Set hw_device_ctx - FFmpeg will manage hw_frames_ctx internally
+  ctx->hw_device_ctx = av_buffer_ref(hw_device_ref);
+  av_buffer_unref(&hw_device_ref);
 
   vdpau_codec_t *vc = calloc(1, sizeof(vdpau_codec_t));
   atomic_set(&vc->vc_refcount, 1);
@@ -473,7 +452,7 @@ vdpau_init_libav_decode(media_codec_t *mc, AVCodecContext *ctx)
   mc->opaque = vc;
   mc->close = vdpau_codec_hw_close;
 
-  mc->get_buffer2 = vdpau_get_buffer;
+  // FFmpeg 6.0: Don't set get_buffer2 - hw_device_ctx handles allocation
 
   TRACE(TRACE_DEBUG, "VDPAU",
         "Created accelerated decoder for %s %d x %d profile:%d",

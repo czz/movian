@@ -1,5 +1,5 @@
 {
-  "submodules": ["ext/libav", "ext/vmir", "ext/rtmpdump", "ext/gumbo-parser",
+  "submodules": ["ext/vmir", "ext/rtmpdump", "ext/gumbo-parser",
                  "ext/libyuv"],
   "targets": {
     "android": {
@@ -29,7 +29,7 @@
         "./configure.android --release --version=${VERSION} --ccache --downloadcache=${WORKDIR}/downloadcache --kind=api16_armv7",
         "make -j${PARALLEL} apk",
         "./configure.android --release --version=${VERSION} --ccache --downloadcache=${WORKDIR}/downloadcache --kind=api16_x86",
-        "make -j${PARALLEL} apk",
+        "make -j${PARALLEL} apk"
       ]
     },
 
@@ -95,7 +95,7 @@
       ],
       "buildcmd": [
         "./configure.osx --release --version=${VERSION} --cleanbuild --ccache",
-        "make -j ${PARALLEL} dist",
+        "make -j ${PARALLEL} dist"
       ]
     },
 

@@ -33,7 +33,7 @@
 
 // -------------------------------------------------------------------
 
-#if ENABLE_LIBAV
+#if ENABLE_FFMPEG
 #include <libavcodec/avcodec.h>
 
 #define MEDIA_TYPE_VIDEO      AVMEDIA_TYPE_VIDEO

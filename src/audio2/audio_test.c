@@ -23,7 +23,7 @@
 #include "audio.h"
 #include "prop/prop.h"
 #include "fileaccess/fileaccess.h"
-#include "fileaccess/fa_libav.h"
+#include "fileaccess/fa_ffmpeg.h"
 #include "misc/minmax.h"
 
 #include <libavformat/avformat.h>
@@ -113,27 +113,33 @@ unpack_audio(const char *url, pcm_sound_t *out)
     TRACE(TRACE_ERROR, "audiotest", "Unable to open %s -- %s", url, errbuf);
     return -1;
   }
-  AVIOContext *avio = fa_libav_reopen(fh, 0);
+  AVIOContext *avio = fa_ffmpeg_reopen(fh, 0, NULL);
 
-  if((fctx = fa_libav_open_format(avio, url, errbuf, sizeof(errbuf), NULL,
-                                  FA_LIBAV_OPEN_STRATEGY_AUDIO)) == NULL) {
-    fa_libav_close(avio);
+  if((fctx = fa_ffmpeg_open_format(avio, url, errbuf, sizeof(errbuf), NULL,
+                                  FA_FFMPEG_OPEN_STRATEGY_AUDIO)) == NULL) {
+    fa_ffmpeg_close(avio);
     goto fail;
   }
 
   int s;
   for(s = 0; s < fctx->nb_streams; s++) {
-    ctx = fctx->streams[s]->codec;
+    ctx = avcodec_alloc_context3(NULL);
+    avcodec_parameters_to_context(ctx, fctx->streams[s]->codecpar);
 
-    if(ctx->codec_type != AVMEDIA_TYPE_AUDIO)
+    if(ctx->codec_type != AVMEDIA_TYPE_AUDIO) {
+      avcodec_free_context(&ctx);
       continue;
+    }
 
     const AVCodec *codec = avcodec_find_decoder(ctx->codec_id);
-    if(codec == NULL)
+    if(codec == NULL) {
+      avcodec_free_context(&ctx);
       continue;
+    }
 
     if(avcodec_open2(ctx, codec, NULL) < 0) {
       TRACE(TRACE_ERROR, "audiotest", "Unable to codec");
+      avcodec_free_context(&ctx);
       continue;
     }
     break;
@@ -154,34 +160,38 @@ unpack_audio(const char *url, pcm_sound_t *out)
     if(r)
       break;
     if(pkt.stream_index == s) {
-      int got_frame;
-      while(pkt.size) {
-	r = avcodec_decode_audio4(ctx, frame, &got_frame, &pkt);
-	if(r < 0)
-	  break;
-	if(got_frame) {
-	  int ns = frame->nb_samples * 2;
+      int ret = avcodec_send_packet(ctx, &pkt);
+      if(ret < 0) {
+        av_packet_unref(&pkt);
+        break;
+      }
+      while(1) {
+        ret = avcodec_receive_frame(ctx, frame);
+        if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+          break;
+        } else if(ret < 0) {
+          av_packet_unref(&pkt);
+          break;
+        }
+        int ns = frame->nb_samples * 2;
 
-	  out->data = realloc(out->data, sizeof(int16_t) * (out->samples + ns));
+        out->data = realloc(out->data, sizeof(int16_t) * (out->samples + ns));
 
-	  const int16_t *src = (const int16_t *)frame->data[0];
+        const int16_t *src = (const int16_t *)frame->data[0];
 
-	  for(int i = 0; i < frame->nb_samples; i++) {
+        for(int i = 0; i < frame->nb_samples; i++) {
 	    int16_t v = src[i];
 	    out->data[out->samples + i * 2 + 0] = v;
 	    out->data[out->samples + i * 2 + 1] = v;
 	  }
 	  out->samples += ns;
 	}
-	pkt.data += r;
-	pkt.size -= r;
       }
-    }
-    av_free_packet(&pkt);
+    av_packet_unref(&pkt);
   }
   av_frame_free(&frame);
-  avcodec_close(ctx);
-  fa_libav_close_format(fctx, 0);
+  avcodec_free_context(&ctx);
+  fa_ffmpeg_close_format(fctx, 0);
   return 0;
 }
 
@@ -216,12 +226,12 @@ test_generator_thread(void *aux)
   media_queue_t *mq = &mp->mp_audio;
   pcm_sound_t voices[8];
   AVFrame *frame = av_frame_alloc();
-  AVCodec *codec = avcodec_find_encoder(AV_CODEC_ID_AC3);
+  const AVCodec *codec = avcodec_find_encoder(AV_CODEC_ID_AC3);
   AVCodecContext *ctx = avcodec_alloc_context3(codec);
 
   ctx->sample_fmt = AV_SAMPLE_FMT_FLTP;
   ctx->sample_rate = 48000;
-  ctx->channel_layout = AV_CH_LAYOUT_5POINT1;
+  av_channel_layout_default(&ctx->ch_layout, 6); // 5.1
 
   if(avcodec_open2(ctx, codec, NULL) < 0) {
     TRACE(TRACE_ERROR, "audio", "Unable to open encoder");
@@ -247,12 +257,11 @@ test_generator_thread(void *aux)
 
   unpack_speaker_positions(voices);
 
+  AVPacket pkt;
+
   while(1) {
 
     if(mb == NULL) {
-
-      int got_packet;
-      AVPacket pkt = {0};
 
       generator_t *g;
 
@@ -294,13 +303,21 @@ test_generator_thread(void *aux)
 
     encode:
       av_init_packet(&pkt);
-      int r = avcodec_encode_audio2(ctx, &pkt, frame, &got_packet);
-      if(!r && got_packet) {
-	mb = media_buf_from_avpkt_unlocked(mp, &pkt);
-	av_free_packet(&pkt);
-      } else {
-	sleep(1);
+      int ret = avcodec_send_frame(ctx, frame);
+      if(ret < 0) {
+        sleep(1);
+        continue;
       }
+      ret = avcodec_receive_packet(ctx, &pkt);
+      if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+        sleep(1);
+        continue;
+      } else if(ret < 0) {
+        sleep(1);
+        continue;
+      }
+      mb = media_buf_from_avpkt_unlocked(mp, &pkt);
+      av_packet_unref(&pkt);
 
       mb->mb_cw = media_codec_ref(mc);
 

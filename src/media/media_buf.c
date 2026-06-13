@@ -19,7 +19,7 @@
  */
 #include "media.h"
 
-#if ENABLE_LIBAV
+#if ENABLE_FFMPEG
 
 
 /**

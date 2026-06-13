@@ -28,8 +28,32 @@
 // We don't have wrappers for DES
 #if ENABLE_OPENSSL
 #include <openssl/des.h>
-#elif ENABLE_POLARSSL
-#include "polarssl/des.h"
+
+#elif ENABLE_MBEDTLS
+
+#include <mbedtls/des.h>
+
+/* IMPORTANT: emulate OpenSSL DES_key_schedule behavior */
+typedef mbedtls_des_context des_context;
+
+/* init is REQUIRED */
+#define des_init(ctx) \
+    mbedtls_des_init(&(ctx))
+
+/* key setup */
+#define des_setkey_enc(ctx, key) \
+    mbedtls_des_setkey_enc(&(ctx), (key))
+
+#define des_setkey_dec(ctx, key) \
+    mbedtls_des_setkey_dec(&(ctx), (key))
+
+/* ECB encrypt */
+#define des_crypt_ecb(ctx, input, output) \
+    mbedtls_des_crypt_ecb(&(ctx), (input), (output))
+
+#define des_free(ctx) \
+    mbedtls_des_free(&(ctx))
+
 #elif ENABLE_COMMONCRYPTO
 #include <CommonCrypto/CommonCrypto.h>
 #else
@@ -316,11 +340,15 @@ lmresponse_round(uint8_t *out, const uint8_t *challenge, const uint8_t *hash)
   DES_key_schedule sched;
   DES_set_key_unchecked((DES_cblock *)spread, &sched);
   DES_ecb_encrypt((DES_cblock *)challenge, (DES_cblock *)out, &sched, 1);
-#elif ENABLE_POLARSSL
+#elif ENABLE_MBEDTLS
 
   des_context ctx;
+/*
   des_setkey_enc(&ctx, spread);
   des_crypt_ecb(&ctx, challenge, out);
+*/
+  des_setkey_enc(ctx, spread);
+  des_crypt_ecb(ctx, challenge, out);
 
 #elif ENABLE_COMMONCRYPTO
   CCCryptorRef ref;

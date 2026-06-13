@@ -6,28 +6,28 @@
 	objectVersion = 46;
 	objects = {
 
-/* Begin PBXAggregateTarget section */
-		6A35C2AE1C1045CD00D8EA86 /* libav-tvOS */ = {
+		/* Begin PBXAggregateTarget section */
+		6A35C2AE1C1045CD00D8EA86 /* ffmpeg-tvOS */ = {
 			isa = PBXAggregateTarget;
-			buildConfigurationList = 6A35C2B01C1045CD00D8EA86 /* Build configuration list for PBXAggregateTarget "libav-tvOS" */;
+			buildConfigurationList = 6A35C2B01C1045CD00D8EA86 /* Build configuration list for PBXAggregateTarget "ffmpeg-tvOS" */;
 			buildPhases = (
 				6A35C2AF1C1045CD00D8EA86 /* ShellScript */,
 			);
 			dependencies = (
 			);
-			name = "libav-tvOS";
-			productName = libav;
+			name = "ffmpeg-tvOS";
+			productName = ffmpeg;
 		};
-		6A697AC21C0B103700156A56 /* libav-iOS */ = {
+		6A697AC21C0B103700156A56 /* ffmpeg-iOS */ = {
 			isa = PBXAggregateTarget;
-			buildConfigurationList = 6A697AC31C0B103700156A56 /* Build configuration list for PBXAggregateTarget "libav-iOS" */;
+			buildConfigurationList = 6A697AC31C0B103700156A56 /* Build configuration list for PBXAggregateTarget "ffmpeg-iOS" */;
 			buildPhases = (
 				6A697AC61C0B103D00156A56 /* ShellScript */,
 			);
 			dependencies = (
 			);
-			name = "libav-iOS";
-			productName = libav;
+			name = "ffmpeg-iOS";
+			productName = ffmpeg;
 		};
 		6A6AD6D31C0E2EDC00931F45 /* GitRevision */ = {
 			isa = PBXAggregateTarget;
@@ -122,7 +122,7 @@
 		6A35C1F51C1041C000D8EA86 /* fa_http.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCDD31B30165D0099FB5A /* fa_http.c */; };
 		6A35C1F61C1041C000D8EA86 /* fa_imageloader.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCDD41B30165D0099FB5A /* fa_imageloader.c */; };
 		6A35C1F71C1041C000D8EA86 /* fa_indexer.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCDD61B30165D0099FB5A /* fa_indexer.c */; };
-		6A35C1F81C1041C000D8EA86 /* fa_libav.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCDD81B30165D0099FB5A /* fa_libav.c */; };
+		6A35C1F81C1041C000D8EA86 /* fa_ffmpeg.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCDD81B30165D0099FB5A /* fa_ffmpeg.c */; };
 		6A35C1F91C1041C000D8EA86 /* fa_probe.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCDDD1B30165D0099FB5A /* fa_probe.c */; };
 		6A35C1FA1C1041C000D8EA86 /* fa_rar.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCDE01B30165D0099FB5A /* fa_rar.c */; };
 		6A35C1FB1C1041C000D8EA86 /* fa_scanner.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCDE11B30165D0099FB5A /* fa_scanner.c */; };
@@ -200,13 +200,13 @@
 		6A35C2441C10423600D8EA86 /* rasterizer_ft.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCF471B30639D0099FB5A /* rasterizer_ft.c */; };
 		6A35C2451C10423600D8EA86 /* dominantcolor.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCE741B304D580099FB5A /* dominantcolor.c */; };
 		6A35C2461C10423600D8EA86 /* image.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCE751B304D580099FB5A /* image.c */; };
-		6A35C2471C10423600D8EA86 /* image_decoder_libav.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCE771B304D580099FB5A /* image_decoder_libav.c */; };
+		6A35C2471C10423600D8EA86 /* image_decoder_ffmpeg.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCE771B304D580099FB5A /* image_decoder_ffmpeg.c */; };
 		6A35C2481C10423600D8EA86 /* jpeg.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCE781B304D580099FB5A /* jpeg.c */; };
 		6A35C2491C10423600D8EA86 /* pixmap.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCE7A1B304D580099FB5A /* pixmap.c */; };
 		6A35C24A1C10423600D8EA86 /* svg.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCE7D1B304D580099FB5A /* svg.c */; };
 		6A35C24B1C10423600D8EA86 /* vector.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCE7E1B304D580099FB5A /* vector.c */; };
 		6A35C24C1C10423600D8EA86 /* keyring.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCD191B30135B0099FB5A /* keyring.c */; };
-		6A35C24D1C10423600D8EA86 /* libav.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCD1B1B30135B0099FB5A /* libav.c */; };
+		6A35C24D1C10423600D8EA86 /* ffmpeg.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCD1B1B30135B0099FB5A /* ffmpeg.c */; };
 		6A35C24E1C10423600D8EA86 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 6AEAE74B1B9A374800235754 /* main.c */; };
 		6A35C24F1C10423D00D8EA86 /* media.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCD821B3015C90099FB5A /* media.c */; };
 		6A35C2501C10423D00D8EA86 /* media_buf.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCD841B3015C90099FB5A /* media_buf.c */; };
@@ -406,7 +406,7 @@
 		6ADCCD321B30135B0099FB5A /* event.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCD131B30135B0099FB5A /* event.c */; };
 		6ADCCD331B30135B0099FB5A /* i18n.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCD151B30135B0099FB5A /* i18n.c */; };
 		6ADCCD351B30135B0099FB5A /* keyring.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCD191B30135B0099FB5A /* keyring.c */; };
-		6ADCCD361B30135B0099FB5A /* libav.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCD1B1B30135B0099FB5A /* libav.c */; };
+		6ADCCD361B30135B0099FB5A /* ffmpeg.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCD1B1B30135B0099FB5A /* ffmpeg.c */; };
 		6ADCCD371B30135B0099FB5A /* navigator.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCD1D1B30135B0099FB5A /* navigator.c */; };
 		6ADCCD381B30135B0099FB5A /* notifications.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCD1F1B30135B0099FB5A /* notifications.c */; };
 		6ADCCD391B30135B0099FB5A /* playqueue.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCD211B30135B0099FB5A /* playqueue.c */; };
@@ -470,7 +470,7 @@
 		6ADCCE071B30165E0099FB5A /* fa_http.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCDD31B30165D0099FB5A /* fa_http.c */; };
 		6ADCCE081B30165E0099FB5A /* fa_imageloader.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCDD41B30165D0099FB5A /* fa_imageloader.c */; };
 		6ADCCE091B30165E0099FB5A /* fa_indexer.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCDD61B30165D0099FB5A /* fa_indexer.c */; };
-		6ADCCE0A1B30165E0099FB5A /* fa_libav.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCDD81B30165D0099FB5A /* fa_libav.c */; };
+		6ADCCE0A1B30165E0099FB5A /* fa_ffmpeg.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCDD81B30165D0099FB5A /* fa_ffmpeg.c */; };
 		6ADCCE0E1B30165E0099FB5A /* fa_probe.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCDDD1B30165D0099FB5A /* fa_probe.c */; };
 		6ADCCE0F1B30165E0099FB5A /* fa_rar.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCDE01B30165D0099FB5A /* fa_rar.c */; };
 		6ADCCE101B30165E0099FB5A /* fa_scanner.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCDE11B30165D0099FB5A /* fa_scanner.c */; };
@@ -501,7 +501,7 @@
 		6ADCCE721B304D390099FB5A /* vobsub.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCE6B1B304D390099FB5A /* vobsub.c */; };
 		6ADCCE801B304D580099FB5A /* dominantcolor.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCE741B304D580099FB5A /* dominantcolor.c */; };
 		6ADCCE811B304D580099FB5A /* image.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCE751B304D580099FB5A /* image.c */; };
-		6ADCCE821B304D580099FB5A /* image_decoder_libav.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCE771B304D580099FB5A /* image_decoder_libav.c */; };
+		6ADCCE821B304D580099FB5A /* image_decoder_ffmpeg.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCE771B304D580099FB5A /* image_decoder_ffmpeg.c */; };
 		6ADCCE831B304D580099FB5A /* jpeg.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCE781B304D580099FB5A /* jpeg.c */; };
 		6ADCCE841B304D580099FB5A /* pixmap.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCE7A1B304D580099FB5A /* pixmap.c */; };
 		6ADCCE861B304D580099FB5A /* svg.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCE7D1B304D580099FB5A /* svg.c */; };
@@ -642,14 +642,14 @@
 			containerPortal = 6AC2B8681B1F23D700969FB4 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 6A35C2AE1C1045CD00D8EA86;
-			remoteInfo = "libav-tvOS";
+			remoteInfo = "ffmpeg-tvOS";
 		};
 		6A697AC71C0B10A100156A56 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 6AC2B8681B1F23D700969FB4 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 6A697AC21C0B103700156A56;
-			remoteInfo = libav;
+			remoteInfo = "ffmpeg-iOS";
 		};
 		6A6AD6D81C0E32A300931F45 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -842,8 +842,8 @@
 		6ADCCD161B30135B0099FB5A /* i18n.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = i18n.h; path = ../src/i18n.h; sourceTree = "<group>"; };
 		6ADCCD191B30135B0099FB5A /* keyring.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = keyring.c; path = ../src/keyring.c; sourceTree = "<group>"; };
 		6ADCCD1A1B30135B0099FB5A /* keyring.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = keyring.h; path = ../src/keyring.h; sourceTree = "<group>"; };
-		6ADCCD1B1B30135B0099FB5A /* libav.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = libav.c; path = ../src/libav.c; sourceTree = "<group>"; };
-		6ADCCD1C1B30135B0099FB5A /* libav.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = libav.h; path = ../src/libav.h; sourceTree = "<group>"; };
+		6ADCCD1B1B30135B0099FB5A /* ffmpeg.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ffmpeg.c; path = ../src/ffmpeg.c; sourceTree = "<group>"; };
+		6ADCCD1C1B30135B0099FB5A /* ffmpeg.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ffmpeg.h; path = ../src/ffmpeg.h; sourceTree = "<group>"; };
 		6ADCCD1D1B30135B0099FB5A /* navigator.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = navigator.c; path = ../src/navigator.c; sourceTree = "<group>"; };
 		6ADCCD1E1B30135B0099FB5A /* navigator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = navigator.h; path = ../src/navigator.h; sourceTree = "<group>"; };
 		6ADCCD1F1B30135B0099FB5A /* notifications.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = notifications.c; path = ../src/notifications.c; sourceTree = "<group>"; };
@@ -948,8 +948,8 @@
 		6ADCCDD51B30165D0099FB5A /* fa_imageloader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fa_imageloader.h; sourceTree = "<group>"; };
 		6ADCCDD61B30165D0099FB5A /* fa_indexer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = fa_indexer.c; sourceTree = "<group>"; };
 		6ADCCDD71B30165D0099FB5A /* fa_indexer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fa_indexer.h; sourceTree = "<group>"; };
-		6ADCCDD81B30165D0099FB5A /* fa_libav.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = fa_libav.c; sourceTree = "<group>"; };
-		6ADCCDD91B30165D0099FB5A /* fa_libav.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fa_libav.h; sourceTree = "<group>"; };
+		6ADCCDD81B30165D0099FB5A /* fa_ffmpeg.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = fa_ffmpeg.c; sourceTree = "<group>"; };
+		6ADCCDD91B30165D0099FB5A /* fa_ffmpeg.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fa_ffmpeg.h; sourceTree = "<group>"; };
 		6ADCCDDD1B30165D0099FB5A /* fa_probe.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = fa_probe.c; sourceTree = "<group>"; };
 		6ADCCDDE1B30165D0099FB5A /* fa_probe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fa_probe.h; sourceTree = "<group>"; };
 		6ADCCDDF1B30165D0099FB5A /* fa_proto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fa_proto.h; sourceTree = "<group>"; };
@@ -1008,7 +1008,7 @@
 		6ADCCE741B304D580099FB5A /* dominantcolor.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dominantcolor.c; sourceTree = "<group>"; };
 		6ADCCE751B304D580099FB5A /* image.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = image.c; sourceTree = "<group>"; };
 		6ADCCE761B304D580099FB5A /* image.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = image.h; sourceTree = "<group>"; };
-		6ADCCE771B304D580099FB5A /* image_decoder_libav.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = image_decoder_libav.c; sourceTree = "<group>"; };
+		6ADCCE771B304D580099FB5A /* image_decoder_ffmpeg.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = image_decoder_ffmpeg.c; sourceTree = "<group>"; };
 		6ADCCE781B304D580099FB5A /* jpeg.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = jpeg.c; sourceTree = "<group>"; };
 		6ADCCE791B304D580099FB5A /* jpeg.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = jpeg.h; sourceTree = "<group>"; };
 		6ADCCE7A1B304D580099FB5A /* pixmap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pixmap.c; sourceTree = "<group>"; };
@@ -1334,8 +1334,8 @@
 				6ADCCE731B304D580099FB5A /* image */,
 				6ADCCD191B30135B0099FB5A /* keyring.c */,
 				6ADCCD1A1B30135B0099FB5A /* keyring.h */,
-				6ADCCD1B1B30135B0099FB5A /* libav.c */,
-				6ADCCD1C1B30135B0099FB5A /* libav.h */,
+				6ADCCD1B1B30135B0099FB5A /* ffmpeg.c */,
+				6ADCCD1C1B30135B0099FB5A /* ffmpeg.h */,
 				6AEAE74B1B9A374800235754 /* main.c */,
 				6ADCCC6C1B30007A0099FB5A /* main.h */,
 				6ADCCD811B3015C90099FB5A /* media */,
@@ -1645,8 +1645,8 @@
 				6ADCCDD51B30165D0099FB5A /* fa_imageloader.h */,
 				6ADCCDD61B30165D0099FB5A /* fa_indexer.c */,
 				6ADCCDD71B30165D0099FB5A /* fa_indexer.h */,
-				6ADCCDD81B30165D0099FB5A /* fa_libav.c */,
-				6ADCCDD91B30165D0099FB5A /* fa_libav.h */,
+				6ADCCDD81B30165D0099FB5A /* fa_ffmpeg.c */,
+				6ADCCDD91B30165D0099FB5A /* fa_ffmpeg.h */,
 				6ADCCDDD1B30165D0099FB5A /* fa_probe.c */,
 				6ADCCDDE1B30165D0099FB5A /* fa_probe.h */,
 				6ADCCDDF1B30165D0099FB5A /* fa_proto.h */,
@@ -1741,7 +1741,7 @@
 				6ADCCE741B304D580099FB5A /* dominantcolor.c */,
 				6ADCCE751B304D580099FB5A /* image.c */,
 				6ADCCE761B304D580099FB5A /* image.h */,
-				6ADCCE771B304D580099FB5A /* image_decoder_libav.c */,
+				6ADCCE771B304D580099FB5A /* image_decoder_ffmpeg.c */,
 				6ADCCE781B304D580099FB5A /* jpeg.c */,
 				6ADCCE791B304D580099FB5A /* jpeg.h */,
 				6ADCCE7A1B304D580099FB5A /* pixmap.c */,
@@ -2128,10 +2128,10 @@
 			projectRoot = "";
 			targets = (
 				6AC2B86F1B1F23D700969FB4 /* Movian-iOS */,
-				6A697AC21C0B103700156A56 /* libav-iOS */,
+				6A697AC21C0B103700156A56 /* ffmpeg-iOS */,
 				6A6AD6D31C0E2EDC00931F45 /* GitRevision */,
 				6AC9385F1C0E443E00D54769 /* Movian-tvOS */,
-				6A35C2AE1C1045CD00D8EA86 /* libav-tvOS */,
+				6A35C2AE1C1045CD00D8EA86 /* ffmpeg-tvOS */,
 			);
 		};
 /* End PBXProject section */
@@ -2193,13 +2193,13 @@
 				"$(BUILT_PRODUCTS_DIR)/lib/libavcodec.a",
 				"$(BUILT_PRODUCTS_DIR)/lib/libavdevice.a",
 				"$(BUILT_PRODUCTS_DIR)/lib/libavformat.a",
-				"$(BUILT_PRODUCTS_DIR)/lib/libavresample.a",
+				"$(BUILT_PRODUCTS_DIR)/lib/libswresample.a",
 				"$(BUILT_PRODUCTS_DIR)/lib/libavutil.a",
 				"$(BUILT_PRODUCTS_DIR)/lib/libswscale.a",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "./build_libav.sh\n";
+			shellScript = "./build_ffmpeg.sh\n";
 		};
 		6A697AC61C0B103D00156A56 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -2212,13 +2212,13 @@
 				"$(BUILT_PRODUCTS_DIR)/lib/libavcodec.a",
 				"$(BUILT_PRODUCTS_DIR)/lib/libavdevice.a",
 				"$(BUILT_PRODUCTS_DIR)/lib/libavformat.a",
-				"$(BUILT_PRODUCTS_DIR)/lib/libavresample.a",
+				"$(BUILT_PRODUCTS_DIR)/lib/libswresample.a",
 				"$(BUILT_PRODUCTS_DIR)/lib/libavutil.a",
 				"$(BUILT_PRODUCTS_DIR)/lib/libswscale.a",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "./build_libav.sh\n";
+			shellScript = "./build_ffmpeg.sh\n";
 		};
 		6A6AD6D71C0E2EE500931F45 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -2277,7 +2277,7 @@
 				6ADCCDC01B3016110099FB5A /* tokenizer.c in Sources */,
 				6ADCCCA81B3000CC0099FB5A /* charset_detector.c in Sources */,
 				6ADCCE041B30165E0099FB5A /* fa_ftp.c in Sources */,
-				6ADCCD361B30135B0099FB5A /* libav.c in Sources */,
+				6ADCCD361B30135B0099FB5A /* ffmpeg.c in Sources */,
 				6ADCCE871B304D580099FB5A /* vector.c in Sources */,
 				6ADCCD921B3015C90099FB5A /* media_codec.c in Sources */,
 				6ADCCDB71B3016110099FB5A /* attribute.c in Sources */,
@@ -2328,7 +2328,7 @@
 				6ADCCCAC1B3000CC0099FB5A /* gz.c in Sources */,
 				6ADCCDFF1B30165E0099FB5A /* fa_bundle.c in Sources */,
 				6AD9A4C91D00305D003BE227 /* slideshow.c in Sources */,
-				6ADCCE0A1B30165E0099FB5A /* fa_libav.c in Sources */,
+				6ADCCE0A1B30165E0099FB5A /* fa_ffmpeg.c in Sources */,
 				6ADCCFFB1B30785D0099FB5A /* glw_video_yuvp.c in Sources */,
 				6ADCCD691B30154E0099FB5A /* es_misc.c in Sources */,
 				6ADBF62F1B9A443D00A21726 /* screenshot.c in Sources */,
@@ -2512,7 +2512,7 @@
 				6ADCCF481B30639D0099FB5A /* rasterizer_ft.c in Sources */,
 				6ADCCD941B3015C90099FB5A /* media_queue.c in Sources */,
 				6ADCCCAF1B3000CC0099FB5A /* pool.c in Sources */,
-				6ADCCE821B304D580099FB5A /* image_decoder_libav.c in Sources */,
+				6ADCCE821B304D580099FB5A /* image_decoder_ffmpeg.c in Sources */,
 				6ADCCFCC1B30785D0099FB5A /* glw_event.c in Sources */,
 				6ADCCE151B30165E0099FB5A /* fa_video.c in Sources */,
 				6ADCCDC21B3016110099FB5A /* util.c in Sources */,
@@ -2651,7 +2651,7 @@
 				6A35C2651C10425D00D8EA86 /* codepages.c in Sources */,
 				6A35C21C1C1041FC00D8EA86 /* glw_mirror.c in Sources */,
 				6A35C2C91C1048A900D8EA86 /* search.c in Sources */,
-				6A35C24D1C10423600D8EA86 /* libav.c in Sources */,
+				6A35C24D1C10423600D8EA86 /* ffmpeg.c in Sources */,
 				6A35C2721C10426F00D8EA86 /* websocket.c in Sources */,
 				6A35C2851C10427C00D8EA86 /* prop_linkselected.c in Sources */,
 				6A35C2241C1041FC00D8EA86 /* glw_rotator.c in Sources */,
@@ -2719,7 +2719,7 @@
 				6A7808C11C45B139009FADCB /* longpress.c in Sources */,
 				6A35C2041C1041D200D8EA86 /* nmb.c in Sources */,
 				6A35C2781C10426F00D8EA86 /* net_apple.c in Sources */,
-				6A35C1F81C1041C000D8EA86 /* fa_libav.c in Sources */,
+				6A35C1F81C1041C000D8EA86 /* fa_ffmpeg.c in Sources */,
 				6A35C1D71C10419700D8EA86 /* es_gumbo.c in Sources */,
 				6A35C1E21C10419700D8EA86 /* es_searcher.c in Sources */,
 				6A35C2451C10423600D8EA86 /* dominantcolor.c in Sources */,
@@ -2755,7 +2755,7 @@
 				6A35C26F1C10425D00D8EA86 /* time.c in Sources */,
 				6A35C2A31C1042B700D8EA86 /* upnp_event.c in Sources */,
 				6A35C23C1C10423600D8EA86 /* htsbuf.c in Sources */,
-				6A35C2471C10423600D8EA86 /* image_decoder_libav.c in Sources */,
+				6A35C2471C10423600D8EA86 /* image_decoder_ffmpeg.c in Sources */,
 				6A35C2B61C10488E00D8EA86 /* backend.c in Sources */,
 				6A35C2701C10425D00D8EA86 /* unicode_composition.c in Sources */,
 				6A35C28E1C10428600D8EA86 /* sd.c in Sources */,
@@ -2819,12 +2819,12 @@
 		};
 		6A35C2B41C1045E700D8EA86 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 6A35C2AE1C1045CD00D8EA86 /* libav-tvOS */;
+			target = 6A35C2AE1C1045CD00D8EA86 /* ffmpeg-tvOS */;
 			targetProxy = 6A35C2B31C1045E700D8EA86 /* PBXContainerItemProxy */;
 		};
 		6A697AC81C0B10A100156A56 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 6A697AC21C0B103700156A56 /* libav-iOS */;
+			target = 6A697AC21C0B103700156A56 /* ffmpeg-iOS */;
 			targetProxy = 6A697AC71C0B10A100156A56 /* PBXContainerItemProxy */;
 		};
 		6A6AD6D91C0E32A300931F45 /* PBXTargetDependency */ = {
@@ -3063,7 +3063,7 @@
 					"${BUILT_PRODUCTS_DIR}/lib/libavformat.a",
 					"${BUILT_PRODUCTS_DIR}/lib/libavcodec.a",
 					"${BUILT_PRODUCTS_DIR}/lib/libavutil.a",
-					"${BUILT_PRODUCTS_DIR}/lib/libavresample.a",
+					"${BUILT_PRODUCTS_DIR}/lib/libswresample.a",
 					"${BUILT_PRODUCTS_DIR}/lib/libswscale.a",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = tv.Movian;
@@ -3109,7 +3109,7 @@
 					"${BUILT_PRODUCTS_DIR}/lib/libavformat.a",
 					"${BUILT_PRODUCTS_DIR}/lib/libavcodec.a",
 					"${BUILT_PRODUCTS_DIR}/lib/libavutil.a",
-					"${BUILT_PRODUCTS_DIR}/lib/libavresample.a",
+					"${BUILT_PRODUCTS_DIR}/lib/libswresample.a",
 					"${BUILT_PRODUCTS_DIR}/lib/libswscale.a",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = tv.Movian;
@@ -3145,7 +3145,7 @@
 					"${BUILT_PRODUCTS_DIR}/lib/libavformat.a",
 					"${BUILT_PRODUCTS_DIR}/lib/libavcodec.a",
 					"${BUILT_PRODUCTS_DIR}/lib/libavutil.a",
-					"${BUILT_PRODUCTS_DIR}/lib/libavresample.a",
+					"${BUILT_PRODUCTS_DIR}/lib/libswresample.a",
 					"${BUILT_PRODUCTS_DIR}/lib/libswscale.a",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.lonelycoder.Movian-tvOS";
@@ -3183,7 +3183,7 @@
 					"${BUILT_PRODUCTS_DIR}/lib/libavformat.a",
 					"${BUILT_PRODUCTS_DIR}/lib/libavcodec.a",
 					"${BUILT_PRODUCTS_DIR}/lib/libavutil.a",
-					"${BUILT_PRODUCTS_DIR}/lib/libavresample.a",
+					"${BUILT_PRODUCTS_DIR}/lib/libswresample.a",
 					"${BUILT_PRODUCTS_DIR}/lib/libswscale.a",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.lonelycoder.Movian-tvOS";
@@ -3197,7 +3197,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		6A35C2B01C1045CD00D8EA86 /* Build configuration list for PBXAggregateTarget "libav-tvOS" */ = {
+		6A35C2B01C1045CD00D8EA86 /* Build configuration list for PBXAggregateTarget "ffmpeg-tvOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				6A35C2B11C1045CD00D8EA86 /* Debug */,
@@ -3206,7 +3206,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		6A697AC31C0B103700156A56 /* Build configuration list for PBXAggregateTarget "libav-iOS" */ = {
+		6A697AC31C0B103700156A56 /* Build configuration list for PBXAggregateTarget "ffmpeg-iOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				6A697AC41C0B103700156A56 /* Debug */,

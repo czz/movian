@@ -32,15 +32,27 @@
 
 #define md4_final(ctx, output) CC_MD4_Final(output, &ctx)
 
-#elif ENABLE_POLARSSL
+#elif ENABLE_MBEDTLS
 
-#include "polarssl/md4.h"
+#include <mbedtls/md4.h>
 
-#define md4_decl(ctx) md4_context *ctx = alloca(sizeof(md4_context));
+/* stato interno mbedTLS */
+#define md4_decl(ctx) mbedtls_md4_context ctx
 
-#define md4_init(ctx) md4_starts(ctx);
+#define md4_init(ctx) \
+    do { \
+        mbedtls_md4_init(&ctx); \
+        mbedtls_md4_starts_ret(&ctx); \
+    } while(0)
 
-#define md4_final(ctx, output) md4_finish(ctx, output);
+#define md4_update(ctx, data, len) \
+    mbedtls_md4_update_ret(&ctx, data, len)
+
+#define md4_final(ctx, output) \
+    do { \
+        mbedtls_md4_finish_ret(&ctx, output); \
+        mbedtls_md4_free(&ctx); \
+    } while(0)
 
 #elif ENABLE_OPENSSL
 
@@ -55,5 +67,5 @@
 #define md4_final(ctx, output) MD4_Final(output, &ctx)
 
 #else
-#error No md4 crypto
+#error no md4 backend
 #endif

@@ -9,7 +9,7 @@ source support/configure.inc
 enable sqlite_internal
 enable glw_backend_opengl_es
 enable glw
-enable polarssl
+enable mbedtls
 enable librtmp
 enable httpserver
 enable dvd
@@ -53,16 +53,16 @@ CXX=${TOOLCHAIN}g++
 setup_env "$@"
 
 
-LIBAV_CFLAGS="-I${EXT_INSTALL_DIR}/include"
-LIBAV_LDFLAGS="-L${EXT_INSTALL_DIR}/lib"
-LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=arm --target-os=linux"
+FFMPEG_CFLAGS="-I${EXT_INSTALL_DIR}/include"
+FFMPEG_LDFLAGS="-L${EXT_INSTALL_DIR}/lib"
+FFMPEG_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=arm --target-os=linux"
 
 if [ -n "$SYSROOT" ]; then 
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += --sysroot=$SYSROOT"
     echo >>${CONFIG_MAK} "CFLAGS_cfg += --sysroot=$SYSROOT"
 
-    LIBAV_CFLAGS="--sysroot=$SYSROOT ${LIBAV_CFLAGS}"
-    LIBAV_LDFLAGS="--sysroot=$SYSROOT ${LIBAV_LDFLAGS}"
+    FFMPEG_CFLAGS="--sysroot=$SYSROOT ${FFMPEG_CFLAGS}"
+    FFMPEG_LDFLAGS="--sysroot=$SYSROOT ${FFMPEG_LDFLAGS}"
 
     export PKG_CONFIG_SYSROOT_DIR="$SYSROOT"
     export PKG_CONFIG_LIBDIR="$SYSROOT/usr/lib/pkgconfig"

@@ -58,7 +58,7 @@ typedef struct video_decoder {
   // Temporary picture
 
   struct SwsContext *vd_sws;
-  AVPicture vd_convert;
+  AVFrame *vd_convert;
   int vd_convert_width;
   int vd_convert_height;
   int vd_convert_pixfmt;

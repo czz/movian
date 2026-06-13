@@ -78,7 +78,7 @@ root@computer ~]# yum groupinstall "Development Tools" "Development Libraries" "
 
 Next add the development packages that Showtime depends on
 
-yasm			to compile the libav
+yasm			to compile FFmpeg
 alsa-lib-devel		alsa support
 pulseaudio-libs-devel	pulse support
 libXScrnSaver		X.Org screen saver support, not default on fedora
@@ -92,13 +92,13 @@ mesa-libGLU-devel
 librtmp-devel
 libdvdread-devel
 libdvdnav-devel
-polarssl
-polarssl-devel
+mbedtls
+mbedtls-devel
 
-// ffmpeg		will be needed when libav is not in main branch			
+// ffmpeg		Always required because Movian now bundles FFmpeg
 // ffmpeg-devel
 
-root@computer ~]# yum install yasm alsa-lib-devel pulseaudio-libs-devel libXScrnSaver libXScrnSaver-devel libXv-devel avahi-devel libvdpau-devel mesa-libGLw mesa-libGLw-devel mesa-libGLU-devel librtmp-devel libdvdread-devel libdvdnav-devel polarssl polarssl-devel ffmpeg ffmpeg-devel
+root@computer ~]# yum install yasm alsa-lib-devel pulseaudio-libs-devel libXScrnSaver libXScrnSaver-devel libXv-devel avahi-devel libvdpau-devel mesa-libGLw mesa-libGLw-devel mesa-libGLU-devel librtmp-devel libdvdread-devel libdvdnav-devel mbedtls mbedtls-devel ffmpeg ffmpeg-devel
 
 
 ###############################################################################

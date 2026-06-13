@@ -20,8 +20,8 @@
 #pragma once
 #include "misc/queue.h"
 #include "misc/minmax.h"
+#include <libavcodec/avcodec.h>
 
-struct AVPacket;
 struct media_pipe;
 struct media_queue;
 

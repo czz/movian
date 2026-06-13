@@ -18,7 +18,7 @@ SRCS += src/arch/sunxi/sunxi_main.c \
 	src/audio2/alsa.c \
 	src/arch/sunxi/sunxi_alsa.c \
 	ext/tlsf/tlsf.c \
-	src/prop/prop_glib_courier.c \
+	src/htsmsg/persistent_file.c \
 
 ${PROG}.stripped: ${PROG}.bundle
 	${STRIP} -o $@ $<
@@ -33,6 +33,6 @@ install: ${PROG}.stripped
 
 	cp ${PROG}.stripped ${INSTDIR}/bin/
 	cp -a ${GLLIBS}/*.so ${INSTDIR}/lib/
-	cp -a ${LIBAV_INSTALL_DIR}/lib/lib* ${INSTDIR}/lib/
+	cp -a ${FFMPEG_INSTALL_DIR}/lib/lib* ${INSTDIR}/lib/
 	${STRIP} ${INSTDIR}/lib/*.so
 

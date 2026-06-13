@@ -205,7 +205,7 @@ metadata_stream_make_prop(const metadata_stream_t *ms, prop_t *parent,
   char url[16];
   rstr_t *title;
 
-  snprintf(url, sizeof(url), "libav:%d", ms->ms_streamindex);
+  snprintf(url, sizeof(url), "ffmpeg:%d", ms->ms_streamindex);
 
   if(ms->ms_disposition & 1) // default
     score += 10;

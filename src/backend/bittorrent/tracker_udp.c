@@ -274,9 +274,11 @@ tracker_udp_handle_error(tracker_t *tr, const uint8_t *data, int size)
   size -= 8;
   data += 8;
   rstr_t *errmsg = rstr_allocl((const char *)data, size);
+  const char *title = to->to_title ? to->to_title : "<unknown>";
+  const char *errstr = errmsg ? rstr_get(errmsg) : "<unknown>";
   tracker_trace(tr, "Got error for \"%s\" (%s) reconnecting",
-                to->to_title,
-                rstr_get(errmsg));
+                title,
+                errstr);
   rstr_release(errmsg);
 
   tracker_udp_send_connect(tr);

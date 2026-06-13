@@ -471,7 +471,7 @@ libyuv_setup() {
 #
 zlib_setup()
 {
-    ZLIB_VER="1.2.13"
+    ZLIB_VER="1.3.2"
     download_file https://zlib.net/zlib-${ZLIB_VER}.tar.gz zlibtarball
 
     ZLIB_SRC_DIR=${BUILDDIR}/zlib-${ZLIB_VER}

@@ -25,16 +25,41 @@ enable sqlite_internal
 enable sqlite_vfs
 enable glw_backend_opengl_es
 enable glw
-enable librtmp
+disable librtmp
 enable httpserver
 enable libfreetype
 enable stdin
-enable polarssl
+enable mbedtls
 enable vmir
 disable upgrade
 
 [ -f project.config ] && source project.config
 
+# Process command line options first to get SDK/NDK paths
+for opt do
+    optval="${opt#*=}"
+    case "$opt" in
+        --ndk=*)
+            NDK="$optval"
+            ;;
+        --sdk=*)
+            SDK="$optval"
+            ;;
+    esac
+done
+
+# Clean up paths
+if [ -n "${NDK}" ]; then
+    NDK=${NDK%/}
+fi
+if [ -n "${SDK}" ]; then
+    SDK=${SDK%/}
+fi
+
+export NDK
+export SDK
+
+# Now process all options
 for opt do
     optval="${opt#*=}"
     case "$opt" in
@@ -42,35 +67,38 @@ for opt do
             show_help
             ;;
         --ndk=*)
-            NDK="$optval"
+            # Already processed above
             ;;
         --sdk=*)
-            SDK="$optval"
+            # Already processed above
             ;;
         --kind=api16_armv7)
-            ANDROID_MIN_SDK_VERSION=15
-            ANDROID_TARGET_SDK_VERSION=21
-            TOOLCHAIN_NAME=arm-linux-androideabi-4.9
+            ANDROID_MIN_SDK_VERSION=16
+            ANDROID_TARGET_SDK_VERSION=27
             ANDROID_BUILDKIND_DESCRIMINATOR=1
-            ANDROID_ABI=armeabi
+            ANDROID_ABI=armeabi-v7a
             BUILD=android.api${ANDROID_MIN_SDK_VERSION}_armv7
-            TOOLCHAIN=${TOPDIR}/build.${BUILD}/toolchain/bin/arm-linux-androideabi-
+            TOOLCHAIN=${NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi${ANDROID_MIN_SDK_VERSION}-
+            # Use llvm tools directly (versioned symlinks don't exist in r23b)
+            export AR=${NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar
+            export RANLIB=${NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ranlib
+            export NM=${NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm
+            export STRIP=${NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip
             ARCH_CFLAGS="-march=armv7-a -mfloat-abi=softfp -mfpu=neon -funwind-tables -fPIC"
             ARCH_LDFLAGS="-march=armv7-a -Wl,--fix-cortex-a8"
-            LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=armv7 --target-os=android --enable-shared --disable-static --as=${TOOLCHAIN}gcc"
+            FFMPEG_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=armv7 --target-os=android --enable-shared --disable-static --as=${TOOLCHAIN}as --nm=${NM} --strip=${STRIP} --disable-asm --disable-inline-asm"
             CC=${TOOLCHAIN}clang
             CXX=${TOOLCHAIN}clang++
             ;;
         --kind=api16_x86)
             ANDROID_MIN_SDK_VERSION=15
             ANDROID_TARGET_SDK_VERSION=21
-            TOOLCHAIN_NAME=x86-linux
-            ANDROID_ABI=x86
             ANDROID_BUILDKIND_DESCRIMINATOR=2
+            ANDROID_ABI=x86
             BUILD=android.api${ANDROID_MIN_SDK_VERSION}_x86
-            TOOLCHAIN=${TOPDIR}/build.${BUILD}/toolchain/bin/i686-linux-android-
+            TOOLCHAIN=${NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android${ANDROID_MIN_SDK_VERSION}-
             ARCH_CFLAGS="-fPIC"
-            LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=x86 --target-os=android --enable-shared --disable-static --as=${TOOLCHAIN}gcc --disable-inline-asm"
+            FFMPEG_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=x86 --target-os=android --enable-shared --disable-static --as=${TOOLCHAIN}as --disable-inline-asm"
             CC="${TOOLCHAIN}clang -mstackrealign"
             CXX="${TOOLCHAIN}clang++ -mstackrealign"
             ;;
@@ -100,6 +128,8 @@ if [ -z "${NDK}" ]; then
     NDK=${SDK}/ndk-bundle
 fi
 
+export NDK
+export SDK
 
 setup_env "$@"
 
@@ -108,22 +138,17 @@ stat "${NDK}"
 echo
 
 if [ ! -f "${CC}" ]; then
-    echo "Installing toolchain..."
-
-    stat "${NDK}/build/tools/make-standalone-toolchain.sh"
-    if [ ! -f "${NDK}/build/tools/make-standalone-toolchain.sh" ]; then
-        echo "NDK not found, either set NDK environment varable or specify --ndk=/path/to/ndk"
-        die
-    fi
-    ${NDK}/build/tools/make-standalone-toolchain.sh --platform=android-${ANDROID_MIN_SDK_VERSION} --install-dir=${TOPDIR}/build.${BUILD}/toolchain --toolchain=${TOOLCHAIN_NAME}
+    echo "Toolchain not found at ${CC}"
+    echo "NDK toolchain location: ${NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/"
+    die
 fi
 
 
 bzip2_setup
-freetype_setup --host=arm-linux-gnueabihf
+PKG_CONFIG="" PKG_CONFIG_PATH="" freetype_setup --host=armv7a-linux-androideabi --without-brotli --with-png=no --with-harfbuzz=no
 
-LIBAV_CFLAGS="-I${EXT_INSTALL_DIR}/include ${ARCH_CFLAGS}"
-LIBAV_LDFLAGS="-L${EXT_INSTALL_DIR}/lib  ${ARCH_LDFLAGS}"
+FFMPEG_CFLAGS="-I${EXT_INSTALL_DIR}/include ${ARCH_CFLAGS}"
+FFMPEG_LDFLAGS="-L${EXT_INSTALL_DIR}/lib  ${ARCH_LDFLAGS}"
 
 ext_setup
 libyuv_setup
@@ -132,6 +157,12 @@ cat >> ${CONFIG_MAK} <<EOF
 CFLAGS_arch = ${ARCH_CFLAGS}
 CFLAGS_cfg += ${ARCH_CFLAGS}
 LDFLAGS_cfg += ${ARCH_LDFLAGS} -lOpenSLES -lGLESv2 -llog -landroid -ljnigraphics
+AR = ${AR}
+RANLIB = ${RANLIB}
+NM = ${NM}
+STRIP = ${STRIP}
+# Disable GCC-specific warnings for Clang
+CFLAGS_cfg += -Wno-unknown-warning-option
 ANDROID_BUILD_TOOLS := ${SDK}/build-tools/${BUILD_TOOLS}
 ANDROID_PLATFORM_PATH := ${SDK}/platforms/android-${ANDROID_TARGET_SDK_VERSION}
 ANDROID_BUILDKIND_DESCRIMINATOR := ${ANDROID_BUILDKIND_DESCRIMINATOR}

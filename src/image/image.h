@@ -200,7 +200,7 @@ image_t *image_coded_create_from_buf(struct buf *buf, image_coded_type_t type);
 
 image_t *image_coded_alloc(void **datap, size_t size, image_coded_type_t type);
 
-struct pixmap *image_decode_libav(image_coded_type_t type,
+struct pixmap *image_decode_ffmpeg(image_coded_type_t type,
                                   struct buf *buf, const image_meta_t *im,
                                   char *errbuf, size_t errlen);
 

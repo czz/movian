@@ -563,50 +563,69 @@ backend_open(prop_t *page, const char *url, int sync)
   backend_t *be;
   char urlbuf[URL_MAX];
 
+  TRACE(TRACE_INFO, "backend", "backend_open: url=%s, sync=%d", url, sync);
+
 #if ENABLE_PLUGINS
   plugin_check_prefix_for_autoinstall(url);
 #endif
 
+  TRACE(TRACE_INFO, "backend", "backend_open: locking dyanamic_backends_mutex");
   hts_lwmutex_lock(&dyanamic_backends_mutex);
+  TRACE(TRACE_INFO, "backend", "backend_open: locked dyanamic_backends_mutex, checking dynamic backends");
   LIST_FOREACH(be, &dynamic_backends, be_global_link) {
     if(mystrbegins(url, be->be_prefix)) {
+      TRACE(TRACE_INFO, "backend", "backend_open: found dynamic backend with prefix %s", be->be_prefix);
       atomic_inc(&be->be_refcount);
       break;
     }
   }
   hts_lwmutex_unlock(&dyanamic_backends_mutex);
+  TRACE(TRACE_INFO, "backend", "backend_open: unlocked dyanamic_backends_mutex");
 
   if(be != NULL) {
+    TRACE(TRACE_INFO, "backend", "backend_open: using dynamic backend");
     prop_set(page, "url", PROP_SET_STRING, url);
     int err;
     if(be->be_open2 == NULL) {
+      TRACE(TRACE_INFO, "backend", "backend_open: be_open2 is NULL, returning error");
       err = 1;
     } else {
+      TRACE(TRACE_INFO, "backend", "backend_open: calling be_open2");
       be->be_open2(page, url, sync, be->be_opaque);
+      TRACE(TRACE_INFO, "backend", "backend_open: be_open2 returned");
       err = 0;
     }
     backend_release(be);
+    TRACE(TRACE_INFO, "backend", "backend_open: dynamic backend done, returning %d", err);
     return err;
   }
 
+  TRACE(TRACE_INFO, "backend", "backend_open: checking static backends with BACKEND_OPEN_CHECKS_URI");
   LIST_FOREACH(be, &backends, be_global_link) {
     if(be->be_flags & BACKEND_OPEN_CHECKS_URI) {
+      TRACE(TRACE_INFO, "backend", "backend_open: trying backend");
       if(be->be_open(page, url, sync))
 	continue;
+      TRACE(TRACE_INFO, "backend", "backend_open: backend succeeded");
       return 0;
     }
   }
 
+  TRACE(TRACE_INFO, "backend", "backend_open: calling backend_canhandle");
   be = backend_canhandle(url);
+  TRACE(TRACE_INFO, "backend", "backend_open: backend_canhandle returned %p", be);
 
   if(be != NULL) {
+    TRACE(TRACE_INFO, "backend", "backend_open: using backend");
     if(be->be_normalize != NULL &&
        !be->be_normalize(url, urlbuf, sizeof(urlbuf)))
       url = urlbuf;
 
     prop_set(page, "url", PROP_SET_STRING, url);
 
+    TRACE(TRACE_INFO, "backend", "backend_open: calling be_open");
     be->be_open(page, url, sync);
+    TRACE(TRACE_INFO, "backend", "backend_open: be_open returned");
     return 0;
   }
 

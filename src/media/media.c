@@ -410,8 +410,10 @@ mp_release(media_pipe_t *mp)
 
   pool_destroy(mp->mp_mb_pool);
 
-  if(mp->mp_satisfied == 0)
-    atomic_dec(&media_buffer_hungry);
+  // Reset media_buffer_hungry counter to 0 when media pipe is released
+  // This ensures the scanner doesn't get stuck after video playback
+  TRACE(TRACE_INFO, "media", "mp_release: resetting media_buffer_hungry to 0");
+  atomic_set(&media_buffer_hungry, 0);
 
   cancellable_release(mp->mp_cancellable);
 
@@ -431,6 +433,7 @@ mp_bump_epoch(media_pipe_t *mp)
 {
   hts_mutex_lock(&mp->mp_mutex);
   mp->mp_epoch++;
+  mp->mp_audio_clock_epoch = mp->mp_epoch;
   hts_mutex_unlock(&mp->mp_mutex);
 }
 

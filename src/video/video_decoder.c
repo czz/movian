@@ -36,7 +36,7 @@
 #include "event.h"
 #include "media/media.h"
 #include "misc/sha.h"
-#include "libav.h"
+#include "ffmpeg.h"
 
 #include "subtitles/ext_subtitles.h"
 #include "subtitles/video_overlay.h"
@@ -539,6 +539,8 @@ void
 video_decoder_destroy(video_decoder_t *vd)
 {
   sws_freeContext(vd->vd_sws);
-  avpicture_free(&vd->vd_convert);
+  if(vd->vd_convert != NULL) {
+    av_frame_free(&vd->vd_convert);
+  }
   free(vd);
 }

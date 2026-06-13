@@ -28,6 +28,7 @@
 #include "navigator.h"
 #include "backend/backend.h"
 #include "backend/backend_prop.h"
+#include "arch/atomic.h"
 #include "event.h"
 #include "plugins.h"
 #include "service.h"
@@ -372,6 +373,8 @@ nav_close(nav_page_t *np, int with_prop)
 {
   navigator_t *nav = np->np_nav;
 
+  TRACE(TRACE_INFO, "navigator", "Closing page %s (with_prop=%d)", np->np_url, with_prop);
+
   page_unsub(np);
 
   if(nav->nav_page_current == np)
@@ -384,6 +387,7 @@ nav_close(nav_page_t *np, int with_prop)
   prop_unlink(np->np_parent_model_dst);
 
   if(with_prop) {
+    TRACE(TRACE_INFO, "navigator", "Destroying prop_root for %s", np->np_url);
     prop_destroy(np->np_prop_root);
     nav_update_cango(nav);
   }
@@ -484,8 +488,10 @@ nav_insert_page(navigator_t *nav, nav_page_t *np, prop_t *item_model)
    * tons of duplicates if holding down some key
    */
 
+  TRACE(TRACE_INFO, "navigator", "Checking for duplicate pages for %s", np->np_url);
   while((np2 = TAILQ_PREV(np, nav_page_queue, np_history_link)) != NULL &&
         !strcmp(np2->np_url, np->np_url)) {
+    TRACE(TRACE_INFO, "navigator", "Found duplicate page %s, closing it", np2->np_url);
     nav_close(np2, 1);
   }
 
@@ -523,6 +529,7 @@ nav_page_direct_close_set(void *opaque, int v)
   nav_page_t *np = opaque;
   navigator_t *nav = np->np_nav;
 
+  TRACE(TRACE_INFO, "navigator", "directClose set to %d for page %s", v, np->np_url);
   np->np_direct_close = v;
 
   if(!v)
@@ -538,6 +545,7 @@ nav_page_direct_close_set(void *opaque, int v)
 
   for(; scan != NULL; scan = TAILQ_NEXT(scan, np_history_link)) {
     if(scan == np) {
+      TRACE(TRACE_INFO, "navigator", "Closing page %s due to directClose", np->np_url);
       nav_close(np, 1);
       return;
     }
@@ -727,8 +735,13 @@ nav_open_thread(void *aux)
 {
   nav_open_backend_aux_t *noba = aux;
 
-  if(backend_open(noba->p, noba->url, 0))
+  TRACE(TRACE_INFO, "navigator", "nav_open_thread: calling backend_open for %s", noba->url);
+  if(backend_open(noba->p, noba->url, 0)) {
+    TRACE(TRACE_INFO, "navigator", "nav_open_thread: backend_open failed for %s", noba->url);
     nav_open_errorf(noba->p, _("No handler for URL"));
+  } else {
+    TRACE(TRACE_INFO, "navigator", "nav_open_thread: backend_open succeeded for %s", noba->url);
+  }
 
   free(noba->url);
   prop_ref_dec(noba->p);
@@ -760,7 +773,8 @@ nav_open0(navigator_t *nav, const char *url, const char *view,
 {
   nav_page_t *np = calloc(1, sizeof(nav_page_t));
 
-  TRACE(TRACE_INFO, "navigator", "Opening %s", url);
+  TRACE(TRACE_INFO, "navigator", "Opening %s (view=%s, how=%s)", url, view ? view : "NULL", how ? how : "NULL");
+
   np->np_nav = nav;
   np->np_url = strdup(url);
   np->np_parent_url = parent_url ? strdup(parent_url) : NULL;
@@ -797,16 +811,22 @@ nav_back(navigator_t *nav)
 {
   nav_page_t *prev, *np = nav->nav_page_current;
 
+  TRACE(TRACE_INFO, "navigator", "nav_back called, current=%s", np ? np->np_url : "NULL");
+
   if(np != NULL &&
      (prev = TAILQ_PREV(np, nav_page_queue, np_history_link)) != NULL) {
 
     const int doclose = np->np_direct_close || gconf.enable_nav_always_close;
+
+    TRACE(TRACE_INFO, "navigator", "nav_back: prev=%s, doclose=%d (np_direct_close=%d, enable_nav_always_close=%d)",
+           prev->np_url, doclose, np->np_direct_close, gconf.enable_nav_always_close);
 
     nav_select(nav, prev, NULL);
 
     if(doclose)
       nav_close(np, 1);
   } else {
+    TRACE(TRACE_INFO, "navigator", "nav_back: no previous page, going to home");
     event_t *e = event_create_action(ACTION_SYSTEM_HOME);
     prop_t *eventsink = prop_create_r(nav->nav_prop_root, "eventSink");
     prop_send_ext_event(eventsink, e);

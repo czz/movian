@@ -1275,7 +1275,7 @@ glw_video_reset(glw_root_t *gr)
 
 
 
-#if ENABLE_LIBAV
+#if ENABLE_FFMPEG
 
 
 static int

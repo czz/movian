@@ -32,17 +32,28 @@
 
 #define sha1_final(ctx, output) CC_SHA1_Final(output, &ctx)
 
-#elif ENABLE_POLARSSL
+#elif ENABLE_MBEDTLS
 
-#include "polarssl/sha1.h"
+#include <mbedtls/sha1.h>
 
-#define sha1_decl(ctx) sha1_context *ctx = alloca(sizeof(sha1_context));
+#define sha1_decl(ctx) mbedtls_sha1_context ctx
 
-#define sha1_init(ctx) sha1_starts(ctx);
+#define sha1_init(ctx) \
+    do { \
+        mbedtls_sha1_init(&ctx); \
+        mbedtls_sha1_starts_ret(&ctx); \
+    } while(0)
 
-#define sha1_final(ctx, output) sha1_finish(ctx, output);
+#define sha1_update(ctx, data, len) \
+    mbedtls_sha1_update_ret(&ctx, data, len)
 
-#elif ENABLE_LIBAV
+#define sha1_final(ctx, output) \
+    do { \
+        mbedtls_sha1_finish_ret(&ctx, output); \
+        mbedtls_sha1_free(&ctx); \
+    } while(0)
+
+#elif ENABLE_FFMPEG
 
 #include <libavutil/sha.h>
 #include <libavutil/mem.h>
@@ -60,6 +71,17 @@
   av_sha_final(ctx, output);                    \
   av_freep(&ctx);                               \
   } while(0)
+#elif ENABLE_OPENSSL
+
+#include <openssl/sha.h>
+
+#define sha1_decl(ctx) SHA_CTX ctx
+
+#define sha1_init(ctx) SHA1_Init(&ctx)
+
+#define sha1_update(ctx, data, len) SHA1_Update(&ctx, data, len)
+
+#define sha1_final(ctx, output) SHA1_Final(output, &ctx)
 
 #else
 #error no sha1

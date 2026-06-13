@@ -35,7 +35,7 @@ video_overlay_enqueue(media_pipe_t *mp, video_overlay_t *vo)
   hts_mutex_unlock(&mp->mp_overlay_mutex);
 }
 
-#if ENABLE_LIBAV
+#if ENABLE_FFMPEG
 
 /**
  * Decode subtitles from LAVC
@@ -96,8 +96,8 @@ video_subtitles_lavc(media_pipe_t *mp, media_buf_t *mb,
 		  break;
 		}
 
-		const uint8_t *src = r->pict.data[0];
-		const uint32_t *clut = (uint32_t *)r->pict.data[1];
+		const uint8_t *src = r->data[0];
+		const uint32_t *clut = (uint32_t *)r->data[1];
 
 		for(y = 0; y < r->h; y++) {
 		  uint32_t *dst = (uint32_t *)(vo->vo_pixmap->pm_data +
@@ -105,7 +105,7 @@ video_subtitles_lavc(media_pipe_t *mp, media_buf_t *mb,
 		  for(x = 0; x < r->w; x++)
 			*dst++ = clut[src[x]];
 
-		  src += r->pict.linesize[0];
+		  src += r->linesize[0];
 		}
 		video_overlay_enqueue(mp, vo);
 		break;
@@ -232,7 +232,7 @@ video_overlay_decode(media_pipe_t *mp, media_buf_t *mb)
 
     if(mc->decode)
       mc->decode(mc, NULL, NULL, mb, 0);
-#if ENABLE_LIBAV
+#if ENABLE_FFMPEG
     else
       video_subtitles_lavc(mp, mb, mc->ctx);
 #endif
