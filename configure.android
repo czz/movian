@@ -18,6 +18,7 @@ show_help(){
   echo "  --kind=KIND           Build for specific android configuration"
   echo "                        api16_armv7  ARMv7 SDK version 16 (4.1)"
   echo "                        api16_x86      x86 SDK version 16 (4.1)"
+  echo "                        api21_arm64   ARMv8/ARMv9 (AArch64) SDK version 21 (5.0)"
   exit 1
 }
 
@@ -98,9 +99,27 @@ for opt do
             BUILD=android.api${ANDROID_MIN_SDK_VERSION}_x86
             TOOLCHAIN=${NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android${ANDROID_MIN_SDK_VERSION}-
             ARCH_CFLAGS="-fPIC"
-            FFMPEG_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=x86 --target-os=android --enable-shared --disable-static --as=${TOOLCHAIN}as --disable-inline-asm"
+            FFMPEG_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=x86 --target-os=android --enable-shared --disable-static --as=${TOOLCHAIN}as --disable-asm --disable-inline-asm"
             CC="${TOOLCHAIN}clang -mstackrealign"
             CXX="${TOOLCHAIN}clang++ -mstackrealign"
+            ;;
+        --kind=api21_arm64)
+            ANDROID_MIN_SDK_VERSION=21
+            ANDROID_TARGET_SDK_VERSION=27
+            ANDROID_BUILDKIND_DESCRIMINATOR=3
+            ANDROID_ABI=arm64-v8a
+            BUILD=android.api${ANDROID_MIN_SDK_VERSION}_arm64
+            TOOLCHAIN=${NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android${ANDROID_MIN_SDK_VERSION}-
+            # Use llvm tools directly
+            export AR=${NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar
+            export RANLIB=${NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ranlib
+            export NM=${NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm
+            export STRIP=${NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip
+            ARCH_CFLAGS="-march=armv8-a -funwind-tables -fPIC"
+            ARCH_LDFLAGS="-march=armv8-a"
+            FFMPEG_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=aarch64 --target-os=android --enable-shared --disable-static --as=${TOOLCHAIN}as --nm=${NM} --strip=${STRIP} --disable-asm --disable-inline-asm"
+            CC=${TOOLCHAIN}clang
+            CXX=${TOOLCHAIN}clang++
             ;;
         *)
             common_opt $opt $optval

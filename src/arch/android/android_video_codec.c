@@ -133,17 +133,17 @@ getInteger(JNIEnv *env, jobject obj, const char *name)
 JNIEXPORT jint JNICALL
 Java_com_lonelycoder_mediaplayer_Core_vdInputAvailable(JNIEnv *env,
                                                        jobject obj,
-                                                       int jopaque,
+                                                       jlong jopaque,
                                                        int jbuf);
 
 JNIEXPORT jint JNICALL
 Java_com_lonelycoder_mediaplayer_Core_vdInputAvailable(JNIEnv *env,
                                                        jobject obj,
-                                                       int jopaque,
+                                                       jlong jopaque,
                                                        int jbuf)
 {
   //  TRACE(TRACE_DEBUG, "AVC", "%s buffer=%d", __FUNCTION__, jbuf);
-  android_video_codec_t *avc = (android_video_codec_t *)jopaque;
+  android_video_codec_t *avc = (android_video_codec_t *)(intptr_t)jopaque;
   avc_buffer_t *ab = malloc(sizeof(avc_buffer_t));
   ab->id = jbuf;
   hts_mutex_lock(avc->avc_mutex);
@@ -159,19 +159,19 @@ Java_com_lonelycoder_mediaplayer_Core_vdInputAvailable(JNIEnv *env,
 JNIEXPORT jint JNICALL
 Java_com_lonelycoder_mediaplayer_Core_vdOutputAvailable(JNIEnv *env,
                                                         jobject obj,
-                                                        int jopaque,
+                                                        jlong jopaque,
                                                         int jbuf,
                                                         jlong ptr);
 
 JNIEXPORT jint JNICALL
 Java_com_lonelycoder_mediaplayer_Core_vdOutputAvailable(JNIEnv *env,
                                                         jobject obj,
-                                                        int jopaque,
+                                                        jlong jopaque,
                                                         int jbuf,
                                                         jlong pts)
 {
   //  TRACE(TRACE_DEBUG, "AVC", "%s buffer=%d PTS=%llx", __FUNCTION__, jbuf, pts);
-  android_video_codec_t *avc = (android_video_codec_t *)jopaque;
+  android_video_codec_t *avc = (android_video_codec_t *)(intptr_t)jopaque;
   avc_buffer_t *ab = malloc(sizeof(avc_buffer_t));
   ab->id = jbuf;
   ab->pts = pts;
@@ -187,16 +187,16 @@ Java_com_lonelycoder_mediaplayer_Core_vdOutputAvailable(JNIEnv *env,
 JNIEXPORT jint JNICALL
 Java_com_lonelycoder_mediaplayer_Core_vdOutputFormatChanged(JNIEnv *env,
                                                             jobject obj,
-                                                            int jopaque,
+                                                            jlong jopaque,
                                                             jobject jinfo);
 
 JNIEXPORT jint JNICALL
 Java_com_lonelycoder_mediaplayer_Core_vdOutputFormatChanged(JNIEnv *env,
                                                             jobject obj,
-                                                            int jopaque,
+                                                        jlong jopaque,
                                                             jobject jinfo)
 {
-  android_video_codec_t *avc = (android_video_codec_t *)jopaque;
+  android_video_codec_t *avc = (android_video_codec_t *)(intptr_t)jopaque;
 
   int width   = getInteger(env, jinfo, "width");
   int height  = getInteger(env, jinfo, "height");
@@ -217,12 +217,12 @@ Java_com_lonelycoder_mediaplayer_Core_vdOutputFormatChanged(JNIEnv *env,
 JNIEXPORT jint JNICALL
 Java_com_lonelycoder_mediaplayer_Core_vdError(JNIEnv *env,
                                               jobject obj,
-                                              int jopaque);
+                                              jlong jopaque);
 
 JNIEXPORT jint JNICALL
 Java_com_lonelycoder_mediaplayer_Core_vdError(JNIEnv *env,
                                               jobject obj,
-                                              int jopaque)
+                                              jlong jopaque)
 {
   TRACE(TRACE_DEBUG, "AVC", "%s", __FUNCTION__);
   return 0;
@@ -573,7 +573,7 @@ android_codec_decode_locked(struct media_codec *mc, struct video_decoder *vd,
 
     if(epoch == fi.fi_epoch && (wt - now) > 10000LL && !skip) {
 
-      AVC_TRACE("Display buffer %5d @ %10lld (+%lld) in %16lld rtd=%lld",
+      AVC_TRACE("Display buffer %5d @ %10" PRId64 " (+%" PRId64 ") in %16" PRId64 " rtd=%" PRId64,
                 idx, fi.fi_pts, fi.fi_pts - ptsdelta, wt - now, rtd);
 
       (*env)->CallVoidMethod(env, avc->avc_decoder,
@@ -588,7 +588,7 @@ android_codec_decode_locked(struct media_codec *mc, struct video_decoder *vd,
       fi.fi_height = avc->avc_height;
       video_deliver_frame(vd, &fi);
     } else {
-      AVC_TRACE("   Skip buffer %5d @ %10lld (+%lld) in %16lld rtd=%lld",
+      AVC_TRACE("   Skip buffer %5d @ %10" PRId64 " (+%" PRId64 ") in %16" PRId64 " rtd=%" PRId64,
                 idx, fi.fi_pts, fi.fi_pts - ptsdelta, wt - now, rtd);
 
       (*env)->CallVoidMethod(env, avc->avc_decoder,
@@ -880,8 +880,8 @@ android_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     avc->avc_cond =  &mp->mp_video.mq_avail;
 
     mid = (*env)->GetStaticMethodID(env, STCore, "setVideoDecoderWrapper",
-                                    "(Landroid/media/MediaCodec;I)V");
-    (*env)->CallStaticVoidMethod(env, STCore, mid, avc->avc_decoder, (int)avc);
+                                    "(Landroid/media/MediaCodec;J)V");
+    (*env)->CallStaticVoidMethod(env, STCore, mid, avc->avc_decoder, (jlong)(intptr_t)avc);
     TRACE(TRACE_DEBUG, "Video", "Accelerated codec in async mode");
 
   } else {
@@ -934,8 +934,8 @@ android_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 
   if(avc->avc_async) {
     mid = (*env)->GetStaticMethodID(env, STCore, "setVideoDecoderWrapper",
-                                    "(Landroid/media/MediaCodec;I)V");
-    (*env)->CallStaticVoidMethod(env, STCore, mid, avc->avc_decoder, (int)avc);
+                                    "(Landroid/media/MediaCodec;J)V");
+    (*env)->CallStaticVoidMethod(env, STCore, mid, avc->avc_decoder, (jlong)(intptr_t)avc);
     if((*env)->ExceptionOccurred(env)) {
       (*env)->ExceptionClear(env);
       avc->avc_async = 0;

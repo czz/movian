@@ -10,7 +10,6 @@ SRCS += \
 	ext/libyuv/source/compare.cc \
 	ext/libyuv/source/compare_common.cc \
 	ext/libyuv/source/compare_gcc.cc \
-	ext/libyuv/source/compare_neon64.cc \
 	ext/libyuv/source/compare_neon.cc \
 	ext/libyuv/source/compare_win.cc \
 	ext/libyuv/source/convert_argb.cc \
@@ -21,21 +20,17 @@ SRCS += \
 	ext/libyuv/source/convert_to_argb.cc \
 	ext/libyuv/source/convert_to_i420.cc \
 	ext/libyuv/source/cpu_id.cc \
-	ext/libyuv/source/mjpeg_decoder.cc \
-	ext/libyuv/source/mjpeg_validate.cc \
 	ext/libyuv/source/planar_functions.cc \
 	ext/libyuv/source/rotate_any.cc \
 	ext/libyuv/source/rotate_argb.cc \
 	ext/libyuv/source/rotate.cc \
 	ext/libyuv/source/rotate_common.cc \
 	ext/libyuv/source/rotate_gcc.cc \
-	ext/libyuv/source/rotate_neon64.cc \
 	ext/libyuv/source/rotate_neon.cc \
 	ext/libyuv/source/rotate_win.cc \
 	ext/libyuv/source/row_any.cc \
 	ext/libyuv/source/row_common.cc \
 	ext/libyuv/source/row_gcc.cc \
-	ext/libyuv/source/row_neon64.cc \
 	ext/libyuv/source/row_neon.cc \
 	ext/libyuv/source/row_win.cc \
 	ext/libyuv/source/scale_any.cc \
@@ -43,7 +38,6 @@ SRCS += \
 	ext/libyuv/source/scale.cc \
 	ext/libyuv/source/scale_common.cc \
 	ext/libyuv/source/scale_gcc.cc \
-	ext/libyuv/source/scale_neon64.cc \
 	ext/libyuv/source/scale_neon.cc \
 	ext/libyuv/source/scale_win.cc \
 	ext/libyuv/source/video_common.cc \

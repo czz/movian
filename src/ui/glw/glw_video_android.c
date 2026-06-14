@@ -298,7 +298,7 @@ surface_set_codec(media_codec_t *mc, glw_video_t *gv,
       break;
     usleep(10000);
   }
-  return (int)surface;
+  return (intptr_t)surface;
 }
 
 

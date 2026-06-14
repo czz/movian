@@ -192,9 +192,9 @@ Java_com_lonelycoder_mediaplayer_Core_glwCreate(JNIEnv *env,
 JNIEXPORT void JNICALL
 Java_com_lonelycoder_mediaplayer_Core_glwInit(JNIEnv *env,
                                                      jobject obj,
-                                                     jint id)
+                                                     jlong id)
 {
-  android_glw_root_t *agr = (android_glw_root_t *)id;
+  android_glw_root_t *agr = (android_glw_root_t *)(intptr_t)id;
   agr->agr_running = 1;
   glw_opengl_init_context(&agr->gr);
   glClearColor(0,0,0,0);
@@ -204,9 +204,9 @@ Java_com_lonelycoder_mediaplayer_Core_glwInit(JNIEnv *env,
 JNIEXPORT void JNICALL
 Java_com_lonelycoder_mediaplayer_Core_glwFini(JNIEnv *env,
                                                      jobject obj,
-                                                     jint id)
+                                                     jlong id)
 {
-  android_glw_root_t *agr = (android_glw_root_t *)id;
+  android_glw_root_t *agr = (android_glw_root_t *)(intptr_t)id;
   glw_root_t *gr = &agr->gr;
 
   pthread_mutex_lock(&permission_mutex);
@@ -230,9 +230,9 @@ Java_com_lonelycoder_mediaplayer_Core_glwFini(JNIEnv *env,
 JNIEXPORT void JNICALL
 Java_com_lonelycoder_mediaplayer_Core_glwDestroy(JNIEnv *env,
                                                  jobject obj,
-                                                 jint id)
+                                                 jlong id)
 {
-  android_glw_root_t *agr = (android_glw_root_t *)id;
+  android_glw_root_t *agr = (android_glw_root_t *)(intptr_t)id;
   glw_root_t *gr = &agr->gr;
 
   prop_unsubscribe(agr->agr_disable_screensaver_sub);
@@ -255,11 +255,11 @@ Java_com_lonelycoder_mediaplayer_Core_glwDestroy(JNIEnv *env,
 JNIEXPORT void JNICALL
 Java_com_lonelycoder_mediaplayer_Core_glwResize(JNIEnv *env,
                                                        jobject obj,
-                                                       jint id,
+                                                       jlong id,
                                                        jint width,
                                                        jint height)
 {
-  android_glw_root_t *agr = (android_glw_root_t *)id;
+  android_glw_root_t *agr = (android_glw_root_t *)(intptr_t)id;
 
   TRACE(TRACE_INFO, "GLW", "Resized to %d x %d", width, height);
   agr->gr.gr_width  = width;
@@ -278,9 +278,9 @@ Java_com_lonelycoder_mediaplayer_Core_glwResize(JNIEnv *env,
 JNIEXPORT void JNICALL
 Java_com_lonelycoder_mediaplayer_Core_glwFlush(JNIEnv *env,
                                                jobject obj,
-                                               jint id)
+                                               jlong id)
 {
-  android_glw_root_t *agr = (android_glw_root_t *)id;
+  android_glw_root_t *agr = (android_glw_root_t *)(intptr_t)id;
   glw_root_t *gr = &agr->gr;
   TRACE(TRACE_INFO, "GLW", "Flushed");
   glw_lock(gr);
@@ -295,9 +295,9 @@ Java_com_lonelycoder_mediaplayer_Core_glwFlush(JNIEnv *env,
 JNIEXPORT void JNICALL
 Java_com_lonelycoder_mediaplayer_Core_glwStep(JNIEnv *env,
                                                      jobject obj,
-                                                     jint id)
+                                                     jlong id)
 {
-  android_glw_root_t *agr = (android_glw_root_t *)id;
+  android_glw_root_t *agr = (android_glw_root_t *)(intptr_t)id;
   glw_root_t *gr = &agr->gr;
   int zmax;
 
@@ -368,14 +368,14 @@ Java_com_lonelycoder_mediaplayer_Core_glwStep(JNIEnv *env,
 JNIEXPORT void JNICALL
 Java_com_lonelycoder_mediaplayer_Core_glwMotion(JNIEnv *env,
                                                 jobject obj,
-                                                jint id,
+                                                jlong id,
                                                 jint source,
                                                 jint action,
                                                 jint x,
                                                 jint y,
                                                 jlong ts)
 {
-  android_glw_root_t *agr = (android_glw_root_t *)id;
+  android_glw_root_t *agr = (android_glw_root_t *)(intptr_t)id;
   glw_root_t *gr = &agr->gr;
   glw_pointer_event_t gpe = {0};
 
@@ -437,12 +437,12 @@ const static action_type_t *shift_btn_to_action[end_of_AKEYCODE] = {
 JNIEXPORT jboolean JNICALL
 Java_com_lonelycoder_mediaplayer_Core_glwKeyDown(JNIEnv *env,
                                                  jobject obj,
-                                                 jint id,
+                                                 jlong id,
                                                  jint keycode,
                                                  jint unicode,
                                                  jboolean shift)
 {
-  android_glw_root_t *agr = (android_glw_root_t *)id;
+  android_glw_root_t *agr = (android_glw_root_t *)(intptr_t)id;
   glw_root_t *gr = &agr->gr;
   event_t *e = NULL;
 
@@ -487,10 +487,10 @@ Java_com_lonelycoder_mediaplayer_Core_glwKeyDown(JNIEnv *env,
 JNIEXPORT jboolean JNICALL
 Java_com_lonelycoder_mediaplayer_Core_glwKeyUp(JNIEnv *env,
                                                       jobject obj,
-                                                      jint id,
+                                                      jlong id,
                                                       jint keycode)
 {
-  android_glw_root_t *agr = (android_glw_root_t *)id;
+  android_glw_root_t *agr = (android_glw_root_t *)(intptr_t)id;
   event_t *e = NULL;
 
   if(gconf.enable_input_event_debug)

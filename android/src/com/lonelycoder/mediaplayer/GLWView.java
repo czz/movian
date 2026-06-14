@@ -22,7 +22,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 class GLWView extends GLSurfaceView {
 
-    private int glwId;
+    private long glwId;
     private long keyMetaState;
     private StringBuilder composer = new StringBuilder();
 

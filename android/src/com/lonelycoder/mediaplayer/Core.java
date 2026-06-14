@@ -52,22 +52,22 @@ public class Core {
     // These two GLW methods should be called on UI thread
 
     public static native int glwCreate(VideoRendererProvider vrp);
-    public static native void glwDestroy(int id);
+    public static native void glwDestroy(long id);
 
     // These four GLW methods should be called on OpenGL renderer thread
 
-    public static native void glwInit(int id);
-    public static native void glwFini(int id);
-    public static native void glwResize(int id, int width, int height);
-    public static native void glwStep(int id);
-    public static native void glwFlush(int id);
+    public static native void glwInit(long id);
+    public static native void glwFini(long id);
+    public static native void glwResize(long id, int width, int height);
+    public static native void glwStep(long id);
+    public static native void glwFlush(long id);
 
     // The thread for those are not so important I think...
 
-    public static native void glwMotion(int id, int source, int event, int x, int y, long timestamp);
-    public static native boolean glwKeyDown(int id, int code, int unicode,
+    public static native void glwMotion(long id, int source, int event, int x, int y, long timestamp);
+    public static native boolean glwKeyDown(long id, int code, int unicode,
                                             boolean shift);
-    public static native boolean glwKeyUp(int id, int code);
+    public static native boolean glwKeyUp(long id, int code);
 
     public static native void permissionResult(boolean ok);
 
@@ -131,16 +131,16 @@ public class Core {
             });
     }
 
-    public static native void vdInputAvailable(int opaque, int buf);
-    public static native void vdOutputAvailable(int opaque, int buf,
+    public static native void vdInputAvailable(long opaque, int buf);
+    public static native void vdOutputAvailable(long opaque, int buf,
                                                 long pts);
-    public static native void vdOutputFormatChanged(int opaque,
+    public static native void vdOutputFormatChanged(long opaque,
                                                     MediaFormat format);
-    public static native void vdError(int opaque);
+    public static native void vdError(long opaque);
 
 
     public static void setVideoDecoderWrapper(MediaCodec codec,
-                                              final int opaque) {
+                                              final long opaque) {
 
         codec.setCallback(new MediaCodec.Callback() {
 
