@@ -91,6 +91,7 @@ To build for Android, you need the Android NDK and SDK installed.
 
 Available architectures:
 - --kind=api16_armv7 (ARMv7)
+- --kind=api21_arm64 (ARMv8/ARMv9)
 - --kind=api16_x86 (x86)
 
 To sign the APK, you have two options:
