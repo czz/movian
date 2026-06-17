@@ -382,7 +382,6 @@ hls_variant_update(hls_variant_t *hv, media_pipe_t *mp)
   int byte_offset = -1;
   int byte_size = -1;
   int seq = 1;
-  int items = 0;
   hls_variant_parser_t hvp;
   int first_seq = -1;
   int discontinuity_seq = -1;
@@ -423,9 +422,6 @@ hls_variant_update(hls_variant_t *hv, media_pipe_t *mp)
         byte_offset = atoi(o+1);
 
     } else if(s[0] != '#') {
-
-      items++;
-
 
       if(seq > hv->hv_last_seq) {
 

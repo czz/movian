@@ -72,8 +72,8 @@ typedef struct media_codec_params {
   unsigned int height;
   int profile;
   int level;
-  int cheat_for_speed : 1;
-  int broken_aud_placement : 1;
+  unsigned int cheat_for_speed : 1;
+  unsigned int broken_aud_placement : 1;
   unsigned int sar_num;
   unsigned int sar_den;
 

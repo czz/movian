@@ -607,7 +607,6 @@ parse_one_expression(token_t *prev, token_t *first, errorinfo_t *ei,
 		     glw_root_t *gr)
 {
   token_t *t = first, *l = NULL;
-  int balance = 0;
 
   while(t != NULL) {
 
@@ -642,14 +641,6 @@ parse_one_expression(token_t *prev, token_t *first, errorinfo_t *ei,
     case TOKEN_BLOCK_CLOSE:
       glw_view_seterr(ei, t, "Unexpected '}'");
       return -1;
-
-    case TOKEN_LEFT_PARENTHESIS:
-      balance++;
-      break;
-
-    case TOKEN_RIGHT_PARENTHESIS:
-      balance--;
-      break;
 
     default:
       break;

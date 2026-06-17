@@ -103,7 +103,7 @@ typedef struct image_component_vector {
   };
   int icv_used;
   int icv_capacity;
-  int icv_colorized : 1;
+  unsigned int icv_colorized : 1;
 } image_component_vector_t;
 
 

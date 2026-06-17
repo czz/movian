@@ -260,7 +260,7 @@ rar_archive_load(rar_archive_t *ra)
   uint8_t method, unpver;
   uint16_t flags;
   uint32_t u32;
-  uint64_t packsize, unpsize;
+  uint64_t packsize;
   int64_t voff;
   rar_volume_t *rv;
   rar_file_t *rf;
@@ -364,7 +364,6 @@ rar_archive_load(rar_archive_t *ra)
     if(buf[2] == RAR_HEADER_FILE || buf[2] == RAR_HEADER_NEWSUB) {
 
       packsize = (uint32_t)(hdr[0] | hdr[1] << 8 | hdr[2] << 16 | hdr[3] << 24);
-      unpsize  = (uint32_t)(hdr[4] | hdr[5] << 8 | hdr[6] << 16 | hdr[7] << 24);
       /* Skip HostOS    1 byte  */
       /* Skip FileCRC   4 bytes */
       /* Skip FileTime  4 bytes */
@@ -377,9 +376,6 @@ rar_archive_load(rar_archive_t *ra)
       if(flags & LHD_LARGE) {
 	u32 = hdr[x+0] | hdr[x+1] << 8 | hdr[x+2] << 16 | hdr[x+3] << 24;
 	packsize |= (uint64_t)u32 << 32;
-
-	u32 = hdr[x+4] | hdr[x+5] << 8 | hdr[x+6] << 16 | hdr[x+7] << 24;
-	unpsize  |= (uint64_t)u32 << 32;
 
 	x+= 8;
       }

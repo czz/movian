@@ -36,13 +36,13 @@ int
 tcp_write_queue(tcpcon_t *tc, htsbuf_queue_t *q)
 {
   htsbuf_data_t *hd;
-  int l, r = 0;
+  int l;
 
   while((hd = TAILQ_FIRST(&q->hq_q)) != NULL) {
     TAILQ_REMOVE(&q->hq_q, hd, hd_link);
 
     l = hd->hd_data_len - hd->hd_data_off;
-    r |= tc->write(tc, hd->hd_data + hd->hd_data_off, l);
+    tc->write(tc, hd->hd_data + hd->hd_data_off, l);
     free(hd->hd_data);
     free(hd);
   }
@@ -58,11 +58,11 @@ int
 tcp_write_queue_dontfree(tcpcon_t *tc, htsbuf_queue_t *q)
 {
   htsbuf_data_t *hd;
-  int l, r = 0;
+  int l;
 
   TAILQ_FOREACH(hd, &q->hq_q, hd_link) {
     l = hd->hd_data_len - hd->hd_data_off;
-    r |= tc->write(tc, hd->hd_data + hd->hd_data_off, l);
+    tc->write(tc, hd->hd_data + hd->hd_data_off, l);
   }
   return 0;
 }

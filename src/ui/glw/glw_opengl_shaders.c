@@ -167,8 +167,6 @@ render_unlocked(glw_root_t *gr)
   glw_backend_root_t *gbr = &gr->gr_be;
   render_state_t rs = {0};
   int64_t ts = arch_get_ts();
-  int uni_calls = 0;
-  int saved_calls = 0;
   int current_blendmode = GLW_BLEND_NORMAL;
 
   glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
@@ -247,9 +245,6 @@ render_unlocked(glw_root_t *gr)
         glw_rgb_cpy(&gp->gp_current_color_offset, &rj->rgb_off);
         glUniform4f(gp->gp_uniform_color_offset,
                     rj->rgb_off.r, rj->rgb_off.g, rj->rgb_off.b, 0);
-        uni_calls++;
-      } else {
-        saved_calls++;
       }
 
       if(!glw_rgb_cmp(&gp->gp_current_color_mul, &rj->rgb_mul) ||
@@ -258,26 +253,20 @@ render_unlocked(glw_root_t *gr)
         gp->gp_current_alpha = rj->alpha;
         glUniform4f(gbr->gbr_current->gp_uniform_color,
                     rj->rgb_mul.r, rj->rgb_mul.g, rj->rgb_mul.b, rj->alpha);
-        uni_calls++;
-      } else {
-        saved_calls++;
       }
 
 
       if(gp->gp_uniform_time != -1) {
         glUniform1f(gp->gp_uniform_time, gr->gr_time_sec);
-        uni_calls++;
       }
 
       if(gp->gp_uniform_resolution != -1) {
         glUniform3f(gp->gp_uniform_resolution, rj->width, rj->height, 1);
-        uni_calls++;
       }
 
       if(gp->gp_uniform_blur != -1 && t0 != NULL) {
         glUniform3f(gp->gp_uniform_blur, rj->blur,
                     1.5 / t0->width, 1.5 / t0->height);
-        uni_calls++;
       }
 
       if(rj->eyespace) {
@@ -285,14 +274,10 @@ render_unlocked(glw_root_t *gr)
         if(!gp->gp_identity_mvm) {
           glUniformMatrix4fv(gp->gp_uniform_modelview, 1, 0, glw_identitymtx);
           gp->gp_identity_mvm = 1;
-          uni_calls++;
-        } else {
-          saved_calls++;
         }
       } else {
         gp->gp_identity_mvm = 0;
         glUniformMatrix4fv(gp->gp_uniform_modelview, 1, 0, glw_mtx_get(rj->m));
-        uni_calls++;
       }
     }
 
@@ -348,13 +333,11 @@ render_unlocked(glw_root_t *gr)
 
   int t = avg/16;
 
-  printf("tt:%-5d  jobs:%-4d vertices:%-4d ps:%-3d uniforms:%-4d (%-4d) tpv:%2.2f\n",
+  printf("tt:%-5d  jobs:%-4d vertices:%-4d ps:%-3d tpv:%2.2f\n",
          t,
          gr->gr_num_render_jobs,
          gr->gr_vertex_offset,
          rs.program_switches,
-         uni_calls,
-         saved_calls,
          (float)t / gr->gr_vertex_offset);
 #endif
 }

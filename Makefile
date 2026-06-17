@@ -54,6 +54,8 @@ VMIR_CFLAGS = ${CFLAGS_std}
 VMIR_CFLAGS +=  -Wall -Werror -Wwrite-strings -Wno-deprecated-declarations \
 		-Wmissing-prototypes -Wno-multichar  -Iext/dvd -std=gnu99
 
+VMIR_CFLAGS += -Wno-unused-but-set-variable
+
 # Only add GCC-specific warnings when actually using GCC
 ifneq ($(findstring clang,$(CC)),clang)
 ifeq "$(GCCVERSIONGTEQ8)" "1"

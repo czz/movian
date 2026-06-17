@@ -9,6 +9,57 @@ source support/configure.inc
 SDK="${ANDROID_HOME}"
 
 BUILD_TOOLS=27.0.3
+USER_BUILD_TOOLS_VERSION=""
+
+detect_sdk_root_from_build_tools_path() {
+    [ -n "${SDK}" ] || return
+
+    if [ -d "${SDK}/build-tools" ]; then
+        return
+    fi
+
+    local sdk_parent sdk_basename
+    sdk_parent="$(dirname "${SDK}")"
+    sdk_basename="$(basename "${sdk_parent}")"
+
+    if [ "${sdk_basename}" = "build-tools" ]; then
+        USER_BUILD_TOOLS_VERSION="$(basename "${SDK}")"
+        SDK="$(dirname "${sdk_parent}")"
+        SDK=${SDK%/}
+        echo "Detected Android SDK root at ${SDK} (build-tools ${USER_BUILD_TOOLS_VERSION})"
+    fi
+}
+
+select_build_tools_version() {
+    [ -n "${SDK}" ] || return
+
+    local build_tools_root="${SDK}/build-tools"
+
+    if [ ! -d "${build_tools_root}" ]; then
+        echo "Android SDK at ${SDK} does not contain a build-tools/ directory"
+        die
+    fi
+
+    if [ -n "${USER_BUILD_TOOLS_VERSION}" ]; then
+        BUILD_TOOLS="${USER_BUILD_TOOLS_VERSION}"
+    fi
+
+    if [ -d "${build_tools_root}/${BUILD_TOOLS}" ]; then
+        return
+    fi
+
+    local detected_version
+    detected_version=$(ls -1 "${build_tools_root}" | sort -Vr | head -n1)
+
+    if [ -n "${detected_version}" ] && [ -d "${build_tools_root}/${detected_version}" ]; then
+        echo "Android build-tools ${BUILD_TOOLS} not found, falling back to ${detected_version}"
+        BUILD_TOOLS="${detected_version}"
+        return
+    fi
+
+    echo "No Android build-tools installations found under ${build_tools_root}"
+    die
+}
 
 
 show_help(){
@@ -56,6 +107,9 @@ fi
 if [ -n "${SDK}" ]; then
     SDK=${SDK%/}
 fi
+
+detect_sdk_root_from_build_tools_path
+select_build_tools_version
 
 export NDK
 export SDK

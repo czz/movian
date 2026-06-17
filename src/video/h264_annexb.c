@@ -238,9 +238,6 @@ hata_sps(h264_annexb_to_avc_t *hata, const uint8_t *data, int len)
   if(sps_id < 0 || sps_id >= 8)
     return;
 
-  int x = 0;
-  for(int i = 0; i < len; i++)
-    x += data[i];
   if(hata->sps[sps_id].len == len && !memcmp(hata->sps[sps_id].data, data, len))
     return;
 

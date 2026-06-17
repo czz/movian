@@ -136,9 +136,9 @@ struct asyncio_fd {
 
   void (*af_resume)(struct asyncio_fd *af);
   
-  int af_suspended : 1;
-  int af_bind_any : 1;
-  int af_broadcast : 1;
+  unsigned int af_suspended : 1;
+  unsigned int af_bind_any : 1;
+  unsigned int af_broadcast : 1;
 
 #if ENABLE_OPENSSL
   int af_ssl_read_status;
